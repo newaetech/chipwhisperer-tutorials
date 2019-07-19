@@ -70,25 +70,30 @@ All messages are sent in ASCII-text, and are normally terminated with a
 line-feed (‘:raw-latex:`\n`’). This allows you to interact with the
 simpleserial system over a standard terminal emulator.
 
-``x`` > Sending a ‘x’ resets the buffers. This does not require a
-line-feed termination. It is suggested to always send a stream of x’s to
-initilize the system in case the device was already in some other mode
-due to noise/corruption.
+``x``
 
-``k00112233445566778899AABBCCDDEEFF\n`` > Loads the encryption key
-``00112233445566778899AABBCCDDEEFF`` into the system. If not called the
-system may use some default key.
+   Sending a ‘x’ resets the buffers. This does not require a line-feed
+   termination. It is suggested to always send a stream of x’s to
+   initilize the system in case the device was already in some other
+   mode due to noise/corruption.
 
-``pAABBCCDDEEFF00112233445566778899\n`` > Encrypts the data
-``AABBCCDDEEFF00112233445566778899`` with the key loaded with the ‘k’
-command. The system will respond with a string starting with r, as shown
-next.
+``k00112233445566778899AABBCCDDEEFF\n``
 
-``rCBBD4A2B34F2571758FF6A797E09859D\n`` > This is the response from the
-system. If data has been encrypted with a ‘p’ for example, the system
-will respond with the ‘r’ sequence automatically. So sending the earlier
-example means the result of the encryption was
-``cbbd4a2b34f2571758ff6a797e09859d``.
+   Loads the encryption key ``00112233445566778899AABBCCDDEEFF`` into
+   the system. If not called the system may use some default key.
+
+``pAABBCCDDEEFF00112233445566778899\n``
+
+   Encrypts the data ``AABBCCDDEEFF00112233445566778899`` with the key
+   loaded with the ‘k’ command. The system will respond with a string
+   starting with r, as shown next.
+
+``rCBBD4A2B34F2571758FF6A797E09859D\n``
+
+   This is the response from the system. If data has been encrypted with
+   a ‘p’ for example, the system will respond with the ‘r’ sequence
+   automatically. So sending the earlier example means the result of the
+   encryption was ``cbbd4a2b34f2571758ff6a797e09859d``.
 
 Building the Basic Example
 --------------------------
@@ -923,8 +928,8 @@ the received text below it.
 
 .. parsed-literal::
 
-    b'b7b8f8952ce8f1cacfad23be1fc4425a'
-    b'b7b8f8952ce8f1cacfad23be1fc4425a'
+    b'96e452792a92ea14f8b3da6185d645ca'
+    b'96e452792a92ea14f8b3da6185d645ca'
     
 
 
@@ -937,11 +942,9 @@ You can also just run:
 
     ret = cw.capture_trace(scope, target, text, key)
     if ret:
-        wave, textin, textout, key = ret
-        print(wave)
-        print(hexlify(textin))
-        print(hexlify(textout))
-        print(hexlify(key))
+        trace = ret
+        print(hexlify(ret.textout))
+        print(hexlify(text))
 
 
 **Out [17]:**
@@ -950,11 +953,8 @@ You can also just run:
 
 .. parsed-literal::
 
-    [ 0.11230469 -0.3125     -0.14648438 ... -0.42285156 -0.22363281
-     -0.18066406]
-    b'b7b8f8952ce8f1cacfad23be1fc4425a'
-    b'b7b8f8952ce8f1cacfad23be1fc4425a'
-    b'2b7e151628aed2a6abf7158809cf4f3c'
+    b'96e452792a92ea14f8b3da6185d645ca'
+    b'96e452792a92ea14f8b3da6185d645ca'
     
 
 
