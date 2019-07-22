@@ -26,39 +26,39 @@ Real Firmware
 ~~~~~~~~~~~~~
 
 Typically, one of the slowest parts of an embedded system is its
-communication lines. It’s pretty common to see a processor running in
+communication lines. It's pretty common to see a processor running in
 the MHz range with a serial connection of 9.6k baud. To make these two
 different speeds work together, embedded firmware usually fills up a
 buffer with data and lets a serial driver print on its own time. This
 setup means we can expect to see code like:
 
-.. code:: C
+.. code:: c
 
-   for(int i = 0; i < number_of_bytes_to_print; i++)
-   {
-       print_one_byte_to_serial(buffer[i]);
-   }
+    for(int i = 0; i < number_of_bytes_to_print; i++)
+    {
+        print_one_byte_to_serial(buffer[i]);
+    }
 
 This is a pretty vulnerable piece of C. Imagine that we could sneak into
 the source code and change it to:
 
-.. code:: C
+.. code:: c
 
-   for(int i = 0; i < really_big_number; i++)
-   {
-       print_one_byte_to_serial(buffer[i]);
-   }
+    for(int i = 0; i < really_big_number; i++)
+    {
+        print_one_byte_to_serial(buffer[i]);
+    }
 
-C compilers don’t care that ``buffer[]`` has a limited size - this loop
+C compilers don't care that ``buffer[]`` has a limited size - this loop
 will happily print every byte it comes across, which could include other
-variables, registers, and even source code. Although we probably don’t
+variables, registers, and even source code. Although we probably don't
 have a good way of changing the source code on the fly, we do have
 glitches: a well-timed clock or power glitch could let us skip the
 ``i < number_of_bytes_to_print`` check, which would have the same
 result.
 
 How could this be applied? Imagine that we have an encrypted firmware
-image that we’re going to transmit to a bootloader. A typical
+image that we're going to transmit to a bootloader. A typical
 communication process might look like:
 
 1. We send the encrypted image ciphertexts over a serial connection
@@ -67,9 +67,9 @@ communication process might look like:
 3. The bootloader sends back a response over the serial port
 
 We have a pretty straightforward attack for this type of bootloader.
-During the last step, we’ll apply a glitch at precisely the right time,
+During the last step, we'll apply a glitch at precisely the right time,
 causing the bootloader to print all kinds of things to the serial
-connection. With some luck, we’ll be able to find the decrypted
+connection. With some luck, we'll be able to find the decrypted
 plaintext somewhere in this memory dump.
 
 Building Firmware
@@ -84,7 +84,7 @@ following commands are used:
    example, this message is made up of the two bytes AB and CD.
 -  ``r0\n\n\n\n\n\n``: The reply from the bootloader. Acknowledges that
    a message was received. No other responses are used.
--  ``x``: Clear the bootloader’s received buffer.
+-  ``x``: Clear the bootloader's received buffer.
 -  ``k``: See x.
 
 The bootloader uses triple-ROT-13 encryption to encrypt/decrypt the
@@ -95,9 +95,9 @@ string. For example, the ciphertext for the string
 
 ::
 
-   p516261276720736265747267206762206f686c207a76797821\n
+    p516261276720736265747267206762206f686c207a76797821\n
 
-Now that we’ve got some basic knowledge of the target code, build it,
+Now that we've got some basic knowledge of the target code, build it,
 then navigate to the ``bootloader-glitch`` firmware directory:
 
 
@@ -116,68 +116,66 @@ then navigate to the ``bootloader-glitch`` firmware directory:
 
 .. parsed-literal::
 
-    rm -f -- bootloader-CWLITEXMEGA.hex
-    rm -f -- bootloader-CWLITEXMEGA.eep
-    rm -f -- bootloader-CWLITEXMEGA.cof
-    rm -f -- bootloader-CWLITEXMEGA.elf
-    rm -f -- bootloader-CWLITEXMEGA.map
-    rm -f -- bootloader-CWLITEXMEGA.sym
-    rm -f -- bootloader-CWLITEXMEGA.lss
-    rm -f -- objdir/\*.o
-    rm -f -- objdir/\*.lst
-    rm -f -- bootloader.s decryption.s XMEGA_AES_driver.s uart.s usart_driver.s xmega_hal.s
-    rm -f -- bootloader.d decryption.d XMEGA_AES_driver.d uart.d usart_driver.d xmega_hal.d
-    rm -f -- bootloader.i decryption.i XMEGA_AES_driver.i uart.i usart_driver.i xmega_hal.i
-    mkdir objdir 
-    mkdir .dep
-    .
-    -------- begin --------
-    avr-gcc (GCC) 5.4.0
-    Copyright (C) 2015 Free Software Foundation, Inc.
-    This is free software; see the source for copying conditions.  There is NO
-    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-    
-    .
-    Compiling C: bootloader.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/bootloader.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/bootloader.o.d bootloader.c -o objdir/bootloader.o 
-    .
-    Compiling C: decryption.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/decryption.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/decryption.o.d decryption.c -o objdir/decryption.o 
-    .
-    Compiling C: .././hal/xmega/XMEGA_AES_driver.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/XMEGA_AES_driver.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/XMEGA_AES_driver.o.d .././hal/xmega/XMEGA_AES_driver.c -o objdir/XMEGA_AES_driver.o 
-    .
-    Compiling C: .././hal/xmega/uart.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/uart.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/uart.o.d .././hal/xmega/uart.c -o objdir/uart.o 
-    .
-    Compiling C: .././hal/xmega/usart_driver.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/usart_driver.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/usart_driver.o.d .././hal/xmega/usart_driver.c -o objdir/usart_driver.o 
-    .
-    Compiling C: .././hal/xmega/xmega_hal.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/xmega_hal.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/xmega_hal.o.d .././hal/xmega/xmega_hal.c -o objdir/xmega_hal.o 
-    .
-    Linking: bootloader-CWLITEXMEGA.elf
-    avr-gcc -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/bootloader.o -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/bootloader-CWLITEXMEGA.elf.d objdir/bootloader.o objdir/decryption.o objdir/XMEGA_AES_driver.o objdir/uart.o objdir/usart_driver.o objdir/xmega_hal.o --output bootloader-CWLITEXMEGA.elf -Wl,-Map=bootloader-CWLITEXMEGA.map,--cref   -lm  
-    .
-    Creating load file for Flash: bootloader-CWLITEXMEGA.hex
-    avr-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature bootloader-CWLITEXMEGA.elf bootloader-CWLITEXMEGA.hex
-    .
-    Creating load file for EEPROM: bootloader-CWLITEXMEGA.eep
-    avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-    --change-section-lma .eeprom=0 --no-change-warnings -O ihex bootloader-CWLITEXMEGA.elf bootloader-CWLITEXMEGA.eep || exit 0
-    .
-    Creating Extended Listing: bootloader-CWLITEXMEGA.lss
-    avr-objdump -h -S -z bootloader-CWLITEXMEGA.elf > bootloader-CWLITEXMEGA.lss
-    .
-    Creating Symbol Table: bootloader-CWLITEXMEGA.sym
-    avr-nm -n bootloader-CWLITEXMEGA.elf > bootloader-CWLITEXMEGA.sym
-    Size after:
-       text	   data	    bss	    dec	    hex	filename
-       1412	    124	    120	   1656	    678	bootloader-CWLITEXMEGA.elf
-    +--------------------------------------------------------
-    + Built for platform CW-Lite XMEGA
-    +--------------------------------------------------------
-    
+    rm -f -- bootloader-CWLITEXMEGA.hex
+    rm -f -- bootloader-CWLITEXMEGA.eep
+    rm -f -- bootloader-CWLITEXMEGA.cof
+    rm -f -- bootloader-CWLITEXMEGA.elf
+    rm -f -- bootloader-CWLITEXMEGA.map
+    rm -f -- bootloader-CWLITEXMEGA.sym
+    rm -f -- bootloader-CWLITEXMEGA.lss
+    rm -f -- objdir/\*.o
+    rm -f -- objdir/\*.lst
+    rm -f -- bootloader.s decryption.s XMEGA_AES_driver.s uart.s usart_driver.s xmega_hal.s
+    rm -f -- bootloader.d decryption.d XMEGA_AES_driver.d uart.d usart_driver.d xmega_hal.d
+    rm -f -- bootloader.i decryption.i XMEGA_AES_driver.i uart.i usart_driver.i xmega_hal.i
+    .
+    -------- begin --------
+    avr-gcc (WinAVR 20100110) 4.3.3
+    Copyright (C) 2008 Free Software Foundation, Inc.
+    This is free software; see the source for copying conditions.  There is NO
+    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    
+    .
+    Compiling C: bootloader.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/bootloader.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/bootloader.o.d bootloader.c -o objdir/bootloader.o 
+    .
+    Compiling C: decryption.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/decryption.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/decryption.o.d decryption.c -o objdir/decryption.o 
+    .
+    Compiling C: .././hal/xmega/XMEGA_AES_driver.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/XMEGA_AES_driver.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/XMEGA_AES_driver.o.d .././hal/xmega/XMEGA_AES_driver.c -o objdir/XMEGA_AES_driver.o 
+    .
+    Compiling C: .././hal/xmega/uart.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/uart.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/uart.o.d .././hal/xmega/uart.c -o objdir/uart.o 
+    .
+    Compiling C: .././hal/xmega/usart_driver.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/usart_driver.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/usart_driver.o.d .././hal/xmega/usart_driver.c -o objdir/usart_driver.o 
+    .
+    Compiling C: .././hal/xmega/xmega_hal.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/xmega_hal.lst -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/xmega_hal.o.d .././hal/xmega/xmega_hal.c -o objdir/xmega_hal.o 
+    .
+    Linking: bootloader-CWLITEXMEGA.elf
+    avr-gcc -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/bootloader.o -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/bootloader-CWLITEXMEGA.elf.d objdir/bootloader.o objdir/decryption.o objdir/XMEGA_AES_driver.o objdir/uart.o objdir/usart_driver.o objdir/xmega_hal.o --output bootloader-CWLITEXMEGA.elf -Wl,-Map=bootloader-CWLITEXMEGA.map,--cref   -lm  
+    .
+    Creating load file for Flash: bootloader-CWLITEXMEGA.hex
+    avr-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature bootloader-CWLITEXMEGA.elf bootloader-CWLITEXMEGA.hex
+    .
+    Creating load file for EEPROM: bootloader-CWLITEXMEGA.eep
+    avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
+    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex bootloader-CWLITEXMEGA.elf bootloader-CWLITEXMEGA.eep || exit 0
+    .
+    Creating Extended Listing: bootloader-CWLITEXMEGA.lss
+    avr-objdump -h -S -z bootloader-CWLITEXMEGA.elf > bootloader-CWLITEXMEGA.lss
+    .
+    Creating Symbol Table: bootloader-CWLITEXMEGA.sym
+    avr-nm -n bootloader-CWLITEXMEGA.elf > bootloader-CWLITEXMEGA.sym
+    Size after:
+       text	   data	    bss	    dec	    hex	filename
+       1540	    124	    120	   1784	    6f8	bootloader-CWLITEXMEGA.elf
+    +--------------------------------------------------------
+    + Built for platform CW-Lite XMEGA
+    +--------------------------------------------------------
+
 
 
 The Attack Plan
@@ -189,37 +187,37 @@ The Sensitive Code
 Inside ``bootloader.c``, there are two buffers that are used to store
 most of the important data. The source code shows:
 
-.. code:: C
+.. code:: c
 
-   #define DATA_BUFLEN 40
-   #define ASCII_BUFLEN (2 * DATA_BUFLEN)
+    #define DATA_BUFLEN 40
+    #define ASCII_BUFLEN (2 * DATA_BUFLEN)
 
-   uint8_t ascii_buffer[ASCII_BUFLEN];
-   uint8_t data_buffer[DATA_BUFLEN];
+    uint8_t ascii_buffer[ASCII_BUFLEN];
+    uint8_t data_buffer[DATA_BUFLEN];
 
 This tells us that there will be two arrays stored somewhere in the
-target’s memory. The AVR-GCC compiler doesn’t usually try too hard to
+target's memory. The AVR-GCC compiler doesn't usually try too hard to
 move these around, so we can expect to find them back-to-back in memory;
-that is, if we can read past the end of the ASCII buffer, we’ll probably
+that is, if we can read past the end of the ASCII buffer, we'll probably
 find the data buffer.
 
 Next, the code used to print a response to the serial port is:
 
-.. code:: C
+.. code:: c
 
-   if(state == RESPOND)
-   {
-       // Send the ascii buffer back 
-       trigger_high();
-       
-       int i;
-       for(i = 0; i < ascii_idx; i++)
-       {
-           putch(ascii_buffer[i]);
-       }
-       trigger_low();
-       state = IDLE;
-   }
+    if(state == RESPOND)
+    {
+        // Send the ascii buffer back 
+        trigger_high();
+        
+        int i;
+        for(i = 0; i < ascii_idx; i++)
+        {
+            putch(ascii_buffer[i]);
+        }
+        trigger_low();
+        state = IDLE;
+    }
 
 This looks very similar to the example code given in the previous
 section, so it should be vulnerable to a glitching attack. The goal is
@@ -230,12 +228,12 @@ the data buffer for us.
 Disassembly
 ~~~~~~~~~~~
 
-As a final step, let’s check the assembly code to see exactly what we’re
+As a final step, let's check the assembly code to see exactly what we're
 trying to glitch through. In the same folder as the hex file you built,
 open the ``*.lss`` file that corresponds to your target (for example,
 ``bootloader-CWLITEARM.lss``). This is called a listing file, and it
 contains a bunch of debug and assembly information. Most importantly, it
-will allow us to easily match the source code to what’s in our hex file.
+will allow us to easily match the source code to what's in our hex file.
 Search the file for something close to the vulnerable loop, such as
 ``state == RESPOND``.
 
@@ -249,43 +247,43 @@ the same length, the compiler will perform loop unrolling. Loop
 unrolling is an optimization that trades code size for speed by
 replacing a constant size loop:
 
-.. code:: C
+.. code:: c
 
-   for (int i = 0; i < 3; i++) 
-       do_something();
+    for (int i = 0; i < 3; i++) 
+        do_something();
 
-by a repeated sequence of the loop’s operations:
+by a repeated sequence of the loop's operations:
 
-.. code:: C
+.. code:: c
 
-   do_something();
-   do_something();
-   do_something();
+    do_something();
+    do_something();
+    do_something();
 
 For a small number of repititions, size-speed tradeoff is skewed towards
 the latter, making it very hard to get the compiler not to perform the
 optimization, thus we simply increase the size of the loop. Most
 bootloaders have multiple different reponses with varying length, so
-this isn’t a typical obstacle you would face, but it is important for
+this isn't a typical obstacle you would face, but it is important for
 this situation.
 
 The `Wikipedia page on loop
 unrolling <https://en.wikipedia.org/wiki/Loop_unrolling>`__ contains
-more information on the topic if you’re like to learn more.
+more information on the topic if you're like to learn more.
 
 XMEGA Disassembly
 ^^^^^^^^^^^^^^^^^
 
 After searching the file, you should see something like this:
 
-.. code::
+::
 
-    38c:   89 91           ld  r24, Y+
-    38e:   0e 94 38 02     call    0x470   ; 0x470 <output_ch_0>
-    392:   f0 e2           ldi r31, 0x20   ; 32
-    394:   c4 38           cpi r28, 0x84   ; 132
-    396:   df 07           cpc r29, r31
-    398:   c9 f7           brne    .-14        ; 0x38c <main+0xbc>
+     38c:   89 91           ld  r24, Y+
+     38e:   0e 94 38 02     call    0x470   ; 0x470 <output_ch_0>
+     392:   f0 e2           ldi r31, 0x20   ; 32
+     394:   c4 38           cpi r28, 0x84   ; 132
+     396:   df 07           cpc r29, r31
+     398:   c9 f7           brne    .-14        ; 0x38c <main+0xbc>
 
 This is our printing loop in assembly. It has the following steps in it:
 
@@ -293,27 +291,27 @@ This is our printing loop in assembly. It has the following steps in it:
    the address stored in ``Y``. (This is the i++ in the loop.)
 -  Call the function in location ``0x470``. Presumably, this is the
    location of the ``putch()`` function.
--  Compare ``r28`` and ``r29`` to ``0x84`` and ``0x20``. Unless they’re
+-  Compare ``r28`` and ``r29`` to ``0x84`` and ``0x20``. Unless they're
    equal, go back to the top of the loop.
 
-There’s one quirk to notice in this code. In the C source, the for loop
+There's one quirk to notice in this code. In the C source, the for loop
 checks whether ``i < ascii_idx``. However, in the assembly code, the
 check is effectively whether ``i == ascii_idx``! This is even easier to
 glitch - as long as we can break past the ``brne`` instruction once,
-we’ll get to the data buffer.
+we'll get to the data buffer.
 
 Arm Disassembly
 ^^^^^^^^^^^^^^^
 
 After searching the file, you should see something like this:
 
-.. code::
+::
 
-    8000268:   5d28        ldrb    r0, [r5, r4]
-    800026a:   3401        adds    r4, #1
-    800026c:   f000 f8f2   bl  8000454 <putch>
-    8000270:   2c08        cmp r4, #8
-    8000272:   d1f9        bne.n   8000268 <main+0x64>
+     8000268:   5d28        ldrb    r0, [r5, r4]
+     800026a:   3401        adds    r4, #1
+     800026c:   f000 f8f2   bl  8000454 <putch>
+     8000270:   2c08        cmp r4, #8
+     8000272:   d1f9        bne.n   8000268 <main+0x64>
 
 We can break this assembly down into the following steps:
 
@@ -322,13 +320,13 @@ We can break this assembly down into the following steps:
 -  Add 1 to ``r4`` (``i``)
 -  Call ``putch``
 -  Compare ``r4`` to 8 (8 is always the value of ``ascii_idx``)
--  Branch back to the beginning of the loop if ``r4`` and 8 aren’t equal
+-  Branch back to the beginning of the loop if ``r4`` and 8 aren't equal
 
-There’s one quirk to notice in this code. In the C source, the for loop
+There's one quirk to notice in this code. In the C source, the for loop
 checks whether ``i < ascii_idx``. However, in the assembly code, the
 check is effectively whether ``i == ascii_idx``! This is even easier to
 glitch - as long as we can break past the ``brne`` instruction once,
-we’ll get to the data buffer.
+we'll get to the data buffer.
 
 The Attack Script
 -----------------
@@ -369,7 +367,7 @@ script. Basic setup is the same as usual:
 
     XMEGA Programming flash...
     XMEGA Reading flash...
-    Verified flash OK, 1535 bytes
+    Verified flash OK, 1663 bytes
     
 
 
@@ -425,7 +423,7 @@ Communicating With Bootloader
         presamples = 0
         samples    = 5000
         decimate   = 1
-        trig_count = 7333067
+        trig_count = 8351156
     clock = 
         adc_src       = clkgen_x4
         adc_phase     = 0
@@ -471,14 +469,14 @@ Communicating With Bootloader
     
 
 
-Now that we have our setup done, let’s work on communicating with the
-bootloader. There’s a few ways to do this, but the easiest is probably
+Now that we have our setup done, let's work on communicating with the
+bootloader. There's a few ways to do this, but the easiest is probably
 to use ``target.write()`` to send our text. Remember, to get to the
 print buffer, we need to send some ``rot13`` encoded text. For this
-example, we’ll use ``Don't forget to buy milk!``, whose ``rot13``
+example, we'll use ``Don't forget to buy milk!``, whose ``rot13``
 encoding is ``516261276720736265747267206762206f686c207a76797821``.
 
-Let’s also change the ADC clock from being x4 of the target clock to
+Let's also change the ADC clock from being x4 of the target clock to
 being x1. This way, we can easily use the ADC module (in particular
 ``scope.adc.trig_count``) to see how long sending the response takes.
 
@@ -492,8 +490,8 @@ being x1. This way, we can easily use the ADC module (in particular
         
     target.write("p516261276720736265747267206762206f686c207a76797821\n")
 
-Next, let’s send the command to the bootloader, observe the response,
-and measure how long it took. Unfortunately, the CWNANO board doesn’t
+Next, let's send the command to the bootloader, observe the response,
+and measure how long it took. Unfortunately, the CWNANO board doesn't
 include this functionality. Instead, if you have an oscilloscope or
 logic analyzer on hand, you can use one of these instead to measure how
 long the trigger was high for.
@@ -531,7 +529,7 @@ long the trigger was high for.
     
     
     
-    The response took 9641 cycles
+    The response took 9645 cycles
     
 
 
@@ -540,7 +538,7 @@ count of roughly 17014 cycles. Remember, we want to glitch the final few
 instructions of the loop, so our glitch point will be just before the
 end (say somewhere in the last 50 cycles). Some targets have better
 defined ranges where the glitch happens (the STM32F3, for example,
-always happens 21 cycles before the trigger goes low). We don’t have
+always happens 21 cycles before the trigger goes low). We don't have
 this information for the CWNANO, but it should be about the same (say
 17020 cycles):
 
@@ -566,26 +564,26 @@ this information for the CWNANO, but it should be about the same (say
 
 .. parsed-literal::
 
-    range(9626, 9641)
+    range(9630, 9645)
     
 
 
 Glitch Loop
 ~~~~~~~~~~~
 
-We’re almost ready to create our glitch loop! Before we do, there’s a
+We're almost ready to create our glitch loop! Before we do, there's a
 few things to keep in mind. The first is dealing with crashes. As you
-might expect, we’ll often crash the target instead of getting the glitch
-we want. In this case, we’ll need to reset the target before we try
+might expect, we'll often crash the target instead of getting the glitch
+we want. In this case, we'll need to reset the target before we try
 communicating with the bootloader. Luckily we can tell if we crashed the
 target by looking at the state of the trigger pin: if the target
 crashes, it will never go low (this also happens with a successful
-glitch, but we’ll be checking for success in the response, so this isn’t
+glitch, but we'll be checking for success in the response, so this isn't
 much of an issue). We can check this via ``scope.adc.state``.
 
-This part is optional, but to make the response easier to read, we’ll
+This part is optional, but to make the response easier to read, we'll
 also want to do some parsing on the response text, since the response
-won’t all be in ASCII text.
+won't all be in ASCII text.
 
 
 **In [11]:**
@@ -612,12 +610,12 @@ glitch module:
         scope.glitch.output = "clock_xor"
 
 We can finally proceed on to our actual loop. Our loop will have the
-same basic idea as the one from ``Fault_1``: we’ll need to iterate
-through ext_offset, offset, and width to find the right settings for a
+same basic idea as the one from ``Fault_1``: we'll need to iterate
+through ext\_offset, offset, and width to find the right settings for a
 glitch.
 
-As was mentioned earlier, we’ll also need to check for a successful
-glitch to avoid resetting while we’re still receiving data. This will
+As was mentioned earlier, we'll also need to check for a successful
+glitch to avoid resetting while we're still receiving data. This will
 also enable us to read the full serial output, since the target will be
 sending back a lot of data (much more than we can receive in one
 ``ser.read()``).
@@ -627,7 +625,7 @@ the device is still in the ``ascii_buffer`` (with the first 8 or so
 characters being overwritten). That means we can check for one of the
 characters after the overwritten part (say ``"7"``).
 
-After we’re sure we have a glitch, we can just keep looking for more
+After we're sure we have a glitch, we can just keep looking for more
 data and printing it.
 
 **Make sure you update the values in the ``external offset range`` call
@@ -710,32 +708,16 @@ to reflect what you got earlier in the tutorial**
 .. parsed-literal::
 
     Glitched!
-    	Ext offset: 9629
+    	Ext offset: 9633
     	Offset: -4.296875
     	Width: 1.5625
-    0x00r0
+    r0
     
     
     
     
     
-    6720736265747267206762206f686c207a767978210x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x00Don't forget to buy milk!0x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x00
-
-
-
-
-.. parsed-literal::
-
-    WARNING:root:SAM3U Serial buffers OVERRUN - data loss has occurred.
-    WARNING:root:SAM3U Serial buffers OVERRUN - data loss has occurred.
-    
-
-
-
-
-.. parsed-literal::
-
-    0x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x00
+    6720736265747267206762206f686c207a767978210x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x00Don't forget to buy milk!0x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x00
 
 
 
@@ -959,55 +941,7 @@ to reflect what you got earlier in the tutorial**
 
 .. parsed-literal::
 
-    0x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x00
-
-
-
-
-.. parsed-literal::
-
-    WARNING:root:SAM3U Serial buffers OVERRUN - data loss has occurred.
-    WARNING:root:SAM3U Serial buffers OVERRUN - data loss has occurred.
-    
-
-
-
-
-.. parsed-literal::
-
-    0x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x00
-
-
-
-
-.. parsed-literal::
-
-    WARNING:root:SAM3U Serial buffers OVERRUN - data loss has occurred.
-    WARNING:root:SAM3U Serial buffers OVERRUN - data loss has occurred.
-    
-
-
-
-
-.. parsed-literal::
-
-    0x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x00
-
-
-
-
-.. parsed-literal::
-
-    WARNING:root:SAM3U Serial buffers OVERRUN - data loss has occurred.
-    WARNING:root:SAM3U Serial buffers OVERRUN - data loss has occurred.
-    
-
-
-
-
-.. parsed-literal::
-
-    0x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x00
+    0x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x000x00
 
 
 With any luck, you should see a whole bunch of text printed to the
@@ -1017,7 +951,7 @@ to rerun the loop a few times.
 You should be able to the plaintext near the beginning of the output!
 The data buffer has successfully been printed to the serial port,
 allowing us to see the decrypted text with no knowledge of the
-algorithm. Now that we’ve got a successful glitch, let’s disconnect the
+algorithm. Now that we've got a successful glitch, let's disconnect the
 scope and target:
 
 
@@ -1031,7 +965,7 @@ scope and target:
 Ideas
 -----
 
-There’s a lot more that can be done with this type of attack…
+There's a lot more that can be done with this type of attack...
 
 Safer Assembly Code
 ~~~~~~~~~~~~~~~~~~~
@@ -1039,36 +973,36 @@ Safer Assembly Code
 You may have been surprised to see that the assembly code uses a
 ``brne`` instruction to check if the loop is finished - after all, we
 used a less-than comparison in our C source code! Try changing this line
-to use a more prohibitive loop. Here’s how you might do this:
+to use a more prohibitive loop. Here's how you might do this:
 
 Volatile Variables
 ~~~~~~~~~~~~~~~~~~
 
 The reason why the original assembly code used the brne instruction is
-because GCC is an *optimizing compiler*. The compiler doesn’t directly
+because GCC is an *optimizing compiler*. The compiler doesn't directly
 translate the C source code into assembly instructions. Instead, it
 tries to determine if any of the code can be modified to make it faster
 or more compact. For instance, consider the loop:
 
-.. code:: C
+.. code:: c
 
-   for(int i = 0; i < 10; i++)
-   {
-       if(i < 20)
-           printf("%s", "Less");
-       else
-           printf("%s", "Greater");
-   }
+    for(int i = 0; i < 10; i++)
+    {
+        if(i < 20)
+            printf("%s", "Less");
+        else
+            printf("%s", "Greater");
+    }
 
-If you take a careful look at this code, you’ll notice that the
+If you take a careful look at this code, you'll notice that the
 following loop will produce the same output:
 
-.. code:: C
+.. code:: c
 
-   for(int i = 0; i < 10; i++)
-   {
-       printf("%s", "Less");
-   }
+    for(int i = 0; i < 10; i++)
+    {
+        printf("%s", "Less");
+    }
 
 However, this second loop is smaller (less code) and faster (no
 conditional jumps). This is the kind of optimization a compiler can
@@ -1078,15 +1012,15 @@ There are several ways we can stop the compiler from making some of
 these assumptions. One of these methods uses volatile variables, which
 look like
 
-.. code:: C
+.. code:: c
 
-   volatile int i;
+    volatile int i;
 
 A volatile variable is one that could change at any time. There could be
 many reasons why the value might change on us:
 
 -  Another thread might have access to the same memory location
--  Another part of the computer might be able to change the variable’s
+-  Another part of the computer might be able to change the variable's
    value (example: direct memory access)
 -  The variable might not actually be stored anywhere - it could be a
    read-only register in an embedded system
@@ -1094,10 +1028,10 @@ many reasons why the value might change on us:
 In any case, the ``volatile`` keyword tells the compiler to make no
 guarantees about this variable.
 
-Try changing the bootloader’s source code to use a volatile variable
+Try changing the bootloader's source code to use a volatile variable
 inside the loop. What happens to the disassembly? Is the loop body
 longer? Connect to the target board and capture a power trace. Does it
-look different? You’ll have to find a new *Ext Trigger Offset* for the
+look different? You'll have to find a new *Ext Trigger Offset* for the
 glitch module. Can you still perform the attack? Is it feasible to use
 this fix to avoid glitching attacks?
 

@@ -15,7 +15,7 @@ when you wish to attack other targets.
 
     SCOPETYPE = 'OPENADC'
     PLATFORM = 'CWLITEXMEGA'
-    CRYPTO_TARGET = 'AVRCRYPTOLIB'
+    CRYPTO_TARGET = 'NONE'
     sample_size = 5
 
 Background on Clock Glitching
@@ -23,17 +23,17 @@ Background on Clock Glitching
 
 Digital hardware devices almost always expect some form of reliable
 clock. We can manipulate the clock being presented to the device to
-cause unintended behaviour. We’ll be concentrating on microcontrollers
-here, however other digital devices (e.g. hardware encryption
+cause unintended behaviour. We'll be concentrating on microcontrollers
+here, however other digital devices (e.g. hardware encryption
 accelerators) can also have faults injected using this technique.
 
 Consider a microcontroller first. The following figure is an excerpt the
 Atmel AVR ATMega328P datasheet:
 
 .. figure:: https://wiki.newae.com/images/2/20/Mcu-unglitched.png
-   :alt: A2_1
+   :alt: A2\_1
 
-   A2_1
+   A2\_1
 
 Rather than loading each instruction from FLASH and performing the
 entire execution, the system has a pipeline to speed up the execution
@@ -41,20 +41,20 @@ process. This means that an instruction is being decoded while the next
 one is being retrieved, as the following diagram shows:
 
 .. figure:: https://wiki.newae.com/images/a/a5/Clock-normal.png
-   :alt: A2_2
+   :alt: A2\_2
 
-   A2_2
+   A2\_2
 
 But if we modify the clock, we could have a situation where the system
-doesn’t have enough time to actually perform an instruction. Consider
+doesn't have enough time to actually perform an instruction. Consider
 the following, where Execute #1 is effectively skipped. Before the
 system has time to actually execute it another clock edge comes, causing
 the microcontroller to start execution of the next instruction:
 
 .. figure:: https://wiki.newae.com/images/1/1e/Clock-glitched.png
-   :alt: A2_3
+   :alt: A2\_3
 
-   A2_3
+   A2\_3
 
 This causes the microcontroller to skip an instruction. Such attacks can
 be immensely powerful in practice. Consider for example the following
@@ -62,51 +62,51 @@ code from ``linux-util-2.24``:
 
 .. code:: c
 
-   /*
-    *   auth.c -- PAM authorization code, common between chsh and chfn
-    *   (c) 2012 by Cody Maloney <cmaloney@theoreticalchaos.com>
-    *
-    *   this program is free software.  you can redistribute it and
-    *   modify it under the terms of the gnu general public license.
-    *   there is no warranty.
-    *
-    */
+    /*
+     *   auth.c -- PAM authorization code, common between chsh and chfn
+     *   (c) 2012 by Cody Maloney <cmaloney@theoreticalchaos.com>
+     *
+     *   this program is free software.  you can redistribute it and
+     *   modify it under the terms of the gnu general public license.
+     *   there is no warranty.
+     *
+     */
 
-   #include "auth.h"
-   #include "pamfail.h"
+    #include "auth.h"
+    #include "pamfail.h"
 
-   int auth_pam(const char *service_name, uid_t uid, const char *username)
-   {
-       if (uid != 0) {
-           pam_handle_t *pamh = NULL;
-           struct pam_conv conv = { misc_conv, NULL };
-           int retcode;
+    int auth_pam(const char *service_name, uid_t uid, const char *username)
+    {
+        if (uid != 0) {
+            pam_handle_t *pamh = NULL;
+            struct pam_conv conv = { misc_conv, NULL };
+            int retcode;
 
-           retcode = pam_start(service_name, username, &conv, &pamh);
-           if (pam_fail_check(pamh, retcode))
-               return FALSE;
+            retcode = pam_start(service_name, username, &conv, &pamh);
+            if (pam_fail_check(pamh, retcode))
+                return FALSE;
 
-           retcode = pam_authenticate(pamh, 0);
-           if (pam_fail_check(pamh, retcode))
-               return FALSE;
+            retcode = pam_authenticate(pamh, 0);
+            if (pam_fail_check(pamh, retcode))
+                return FALSE;
 
-           retcode = pam_acct_mgmt(pamh, 0);
-           if (retcode == PAM_NEW_AUTHTOK_REQD)
-               retcode =
-                   pam_chauthtok(pamh, PAM_CHANGE_EXPIRED_AUTHTOK);
-           if (pam_fail_check(pamh, retcode))
-               return FALSE;
+            retcode = pam_acct_mgmt(pamh, 0);
+            if (retcode == PAM_NEW_AUTHTOK_REQD)
+                retcode =
+                    pam_chauthtok(pamh, PAM_CHANGE_EXPIRED_AUTHTOK);
+            if (pam_fail_check(pamh, retcode))
+                return FALSE;
 
-           retcode = pam_setcred(pamh, 0);
-           if (pam_fail_check(pamh, retcode))
-               return FALSE;
+            retcode = pam_setcred(pamh, 0);
+            if (pam_fail_check(pamh, retcode))
+                return FALSE;
 
-           pam_end(pamh, 0);
-           /* no need to establish a session; this isn't a
-            * session-oriented activity...  */
-       }
-       return TRUE;
-   }
+            pam_end(pamh, 0);
+            /* no need to establish a session; this isn't a
+             * session-oriented activity...  */
+        }
+        return TRUE;
+    }
 
 This is the login code for the Linux OS. Note that if we could skip the
 check of ``if (uid != 0)`` and simply branch to the end, we could avoid
@@ -118,19 +118,19 @@ Glitch Hardware
 ---------------
 
 The ChipWhisperer Glitch system uses the same synchronous methodology as
-it’s Side Channel Analysis (SCA) capture. A system clock (which can come
+it's Side Channel Analysis (SCA) capture. A system clock (which can come
 from either the ChipWhisperer or the Device Under Test (DUT)) is used to
 generate the glitches. These glitches are then inserted back into the
-clock, although it’s possible to use the glitches alone for other
-purposes (i.e. for voltage glitching, EM glitching).
+clock, although it's possible to use the glitches alone for other
+purposes (i.e. for voltage glitching, EM glitching).
 
 The generation of glitches is done with two variable phase shift
 modules, configured as follows:
 
 .. figure:: https://wiki.newae.com/images/6/65/Glitchgen-phaseshift.png
-   :alt: A2_4
+   :alt: A2\_4
 
-   A2_4
+   A2\_4
 
 The enable line is used to determine when glitches are inserted.
 Glitches can be inserted continuously (useful for development) or
@@ -138,9 +138,9 @@ triggered by some event. The following figure shows how the glitch can
 be muxd to output to the Device Under Test (DUT).
 
 .. figure:: https://wiki.newae.com/images/c/c0/Glitchgen-mux.png
-   :alt: A2_5
+   :alt: A2\_5
 
-   A2_5
+   A2\_5
 
 Hardware Support
 ~~~~~~~~~~~~~~~~
@@ -158,28 +158,28 @@ target at 7.37MHz the clock cycle would have a period of 136nS. In order
 to provide a larger adjustment range, an advanced FPGA feature called
 Partial Reconfiguration (PR) is used. The PR system requires special
 partial bitstreams which contain modifications to the FPGA bitstream.
-These are stored as two files inside a “firmware” zip which contains
+These are stored as two files inside a "firmware" zip which contains
 both the FPGA bitstream along with a file called ``glitchwidth.p`` and a
 file called ``glitchoffset.p``. If a lone bitstream is being loaded into
-the FPGA (i.e. not from the zip-file), the partial reconfiguration
+the FPGA (i.e. not from the zip-file), the partial reconfiguration
 system is disabled, as loading incorrect partial reconfiguration files
 could damage the FPGA. This damage is mostly theoretical, more likely
 the FPGA will fail to function correctly.
 
 If in the course of following this tutorial you find the FPGA appears to
-stop responding (i.e. certain features no longer work correctly), it
+stop responding (i.e. certain features no longer work correctly), it
 could be the partial reconfiguration data is incorrect.
 
-We’ll look at how to interface with these features later in the
+We'll look at how to interface with these features later in the
 tutorial.
 
 Setting Up Firmware
 -------------------
 
-As with previous tutorials, we’ll start by creating a new project from
+As with previous tutorials, we'll start by creating a new project from
 base firmware, as well as setting up our ``PLATFORM`` and
-``CRYPTO_TARGET``. This tutorial doesn’t use any crypto, so we’ll leave
-the latter option as ``NONE``. This time, we’ll be using
+``CRYPTO_TARGET``. This tutorial doesn't use any crypto, so we'll leave
+the latter option as ``NONE``. This time, we'll be using
 ``glitch-simple``:
 
 Now navigate to the ``glitch-simple-lab1`` folder and open
@@ -188,74 +188,74 @@ Now navigate to the ``glitch-simple-lab1`` folder and open
 
 .. code:: c
 
-   void glitch1(void)
-   {
-       led_ok(1);
-       led_error(0);
-       
-       //Some fake variable
-       volatile uint8_t a = 0;
-       
-       putch('A');
-       
-       //External trigger logic
-       trigger_high();
-       trigger_low();
-       
-       //Should be an infinite loop
-       while(a != 2){
-       ;
-       }    
-       
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       
-       uart_puts("1234");
-       
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       led_error(1);
-       led_error(1);
+    void glitch1(void)
+    {
+        led_ok(1);
+        led_error(0);
+        
+        //Some fake variable
+        volatile uint8_t a = 0;
+        
+        putch('A');
+        
+        //External trigger logic
+        trigger_high();
+        trigger_low();
+        
+        //Should be an infinite loop
+        while(a != 2){
+        ;
+        }    
+        
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        
+        uart_puts("1234");
+        
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        led_error(1);
+        led_error(1);
 
-       //Several loops in order to try and prevent restarting
-       while(1){
-       ;
-       }
-       while(1){
-       ;
-       }
-       while(1){
-       ;
-       }
-       while(1){
-       ;
-       }
-       while(1){
-       ;
-       }    
-   }
+        //Several loops in order to try and prevent restarting
+        while(1){
+        ;
+        }
+        while(1){
+        ;
+        }
+        while(1){
+        ;
+        }
+        while(1){
+        ;
+        }
+        while(1){
+        ;
+        }    
+    }
 
 We can see here that sends back an ``'A'``, toggles the trigger pin,
 then enters an infinite loop. After the infinite loop, the device sends
 back ``"1234"``. On boards that support it, the firmware will also
-activate a green “OK” LED upon entering the function and a red “ERROR”
+activate a green "OK" LED upon entering the function and a red "ERROR"
 LED when a successful glitch occurs. Our objective will be to glitch
 past the infinite loop.
 
-Before you build, navigate to main(). You’ll see some C preprocessor
+Before you build, navigate to main(). You'll see some C preprocessor
 directives that will allow us to switch between the different functions
-whithout having to edit the ``glitchsimple.c`` file. We’ll do this via
+whithout having to edit the ``glitchsimple.c`` file. We'll do this via
 the ``FUNC_SEL`` makefile variable like so:
 
 
@@ -274,68 +274,66 @@ the ``FUNC_SEL`` makefile variable like so:
 
 .. parsed-literal::
 
-    rm -f -- glitchsimple-CWLITEXMEGA.hex
-    rm -f -- glitchsimple-CWLITEXMEGA.eep
-    rm -f -- glitchsimple-CWLITEXMEGA.cof
-    rm -f -- glitchsimple-CWLITEXMEGA.elf
-    rm -f -- glitchsimple-CWLITEXMEGA.map
-    rm -f -- glitchsimple-CWLITEXMEGA.sym
-    rm -f -- glitchsimple-CWLITEXMEGA.lss
-    rm -f -- objdir/\*.o
-    rm -f -- objdir/\*.lst
-    rm -f -- glitchsimple.s simpleserial.s XMEGA_AES_driver.s uart.s usart_driver.s xmega_hal.s
-    rm -f -- glitchsimple.d simpleserial.d XMEGA_AES_driver.d uart.d usart_driver.d xmega_hal.d
-    rm -f -- glitchsimple.i simpleserial.i XMEGA_AES_driver.i uart.i usart_driver.i xmega_hal.i
-    mkdir objdir 
-    mkdir .dep
-    .
-    -------- begin --------
-    avr-gcc (GCC) 5.4.0
-    Copyright (C) 2015 Free Software Foundation, Inc.
-    This is free software; see the source for copying conditions.  There is NO
-    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-    
-    .
-    Compiling C: glitchsimple.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/glitchsimple.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/glitchsimple.o.d glitchsimple.c -o objdir/glitchsimple.o 
-    .
-    Compiling C: .././simpleserial/simpleserial.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial.o.d .././simpleserial/simpleserial.c -o objdir/simpleserial.o 
-    .
-    Compiling C: .././hal/xmega/XMEGA_AES_driver.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/XMEGA_AES_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/XMEGA_AES_driver.o.d .././hal/xmega/XMEGA_AES_driver.c -o objdir/XMEGA_AES_driver.o 
-    .
-    Compiling C: .././hal/xmega/uart.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/uart.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/uart.o.d .././hal/xmega/uart.c -o objdir/uart.o 
-    .
-    Compiling C: .././hal/xmega/usart_driver.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/usart_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/usart_driver.o.d .././hal/xmega/usart_driver.c -o objdir/usart_driver.o 
-    .
-    Compiling C: .././hal/xmega/xmega_hal.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/xmega_hal.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/xmega_hal.o.d .././hal/xmega/xmega_hal.c -o objdir/xmega_hal.o 
-    .
-    Linking: glitchsimple-CWLITEXMEGA.elf
-    avr-gcc -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/glitchsimple.o -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/glitchsimple-CWLITEXMEGA.elf.d objdir/glitchsimple.o objdir/simpleserial.o objdir/XMEGA_AES_driver.o objdir/uart.o objdir/usart_driver.o objdir/xmega_hal.o --output glitchsimple-CWLITEXMEGA.elf -Wl,-Map=glitchsimple-CWLITEXMEGA.map,--cref   -lm  
-    .
-    Creating load file for Flash: glitchsimple-CWLITEXMEGA.hex
-    avr-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.hex
-    .
-    Creating load file for EEPROM: glitchsimple-CWLITEXMEGA.eep
-    avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-    --change-section-lma .eeprom=0 --no-change-warnings -O ihex glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.eep || exit 0
-    .
-    Creating Extended Listing: glitchsimple-CWLITEXMEGA.lss
-    avr-objdump -h -S -z glitchsimple-CWLITEXMEGA.elf > glitchsimple-CWLITEXMEGA.lss
-    .
-    Creating Symbol Table: glitchsimple-CWLITEXMEGA.sym
-    avr-nm -n glitchsimple-CWLITEXMEGA.elf > glitchsimple-CWLITEXMEGA.sym
-    Size after:
-       text	   data	    bss	    dec	    hex	filename
-       3672	     68	     52	   3792	    ed0	glitchsimple-CWLITEXMEGA.elf
-    +--------------------------------------------------------
-    + Built for platform CW-Lite XMEGA
-    +--------------------------------------------------------
-    
+    rm -f -- glitchsimple-CWLITEXMEGA.hex
+    rm -f -- glitchsimple-CWLITEXMEGA.eep
+    rm -f -- glitchsimple-CWLITEXMEGA.cof
+    rm -f -- glitchsimple-CWLITEXMEGA.elf
+    rm -f -- glitchsimple-CWLITEXMEGA.map
+    rm -f -- glitchsimple-CWLITEXMEGA.sym
+    rm -f -- glitchsimple-CWLITEXMEGA.lss
+    rm -f -- objdir/\*.o
+    rm -f -- objdir/\*.lst
+    rm -f -- glitchsimple.s simpleserial.s XMEGA_AES_driver.s uart.s usart_driver.s xmega_hal.s
+    rm -f -- glitchsimple.d simpleserial.d XMEGA_AES_driver.d uart.d usart_driver.d xmega_hal.d
+    rm -f -- glitchsimple.i simpleserial.i XMEGA_AES_driver.i uart.i usart_driver.i xmega_hal.i
+    .
+    -------- begin --------
+    avr-gcc (WinAVR 20100110) 4.3.3
+    Copyright (C) 2008 Free Software Foundation, Inc.
+    This is free software; see the source for copying conditions.  There is NO
+    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    
+    .
+    Compiling C: glitchsimple.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/glitchsimple.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/glitchsimple.o.d glitchsimple.c -o objdir/glitchsimple.o 
+    .
+    Compiling C: .././simpleserial/simpleserial.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial.o.d .././simpleserial/simpleserial.c -o objdir/simpleserial.o 
+    .
+    Compiling C: .././hal/xmega/XMEGA_AES_driver.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/XMEGA_AES_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/XMEGA_AES_driver.o.d .././hal/xmega/XMEGA_AES_driver.c -o objdir/XMEGA_AES_driver.o 
+    .
+    Compiling C: .././hal/xmega/uart.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/uart.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/uart.o.d .././hal/xmega/uart.c -o objdir/uart.o 
+    .
+    Compiling C: .././hal/xmega/usart_driver.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/usart_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/usart_driver.o.d .././hal/xmega/usart_driver.c -o objdir/usart_driver.o 
+    .
+    Compiling C: .././hal/xmega/xmega_hal.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/xmega_hal.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/xmega_hal.o.d .././hal/xmega/xmega_hal.c -o objdir/xmega_hal.o 
+    .
+    Linking: glitchsimple-CWLITEXMEGA.elf
+    avr-gcc -mmcu=atxmega128d3 -I. -DGLITCH1 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/glitchsimple.o -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/glitchsimple-CWLITEXMEGA.elf.d objdir/glitchsimple.o objdir/simpleserial.o objdir/XMEGA_AES_driver.o objdir/uart.o objdir/usart_driver.o objdir/xmega_hal.o --output glitchsimple-CWLITEXMEGA.elf -Wl,-Map=glitchsimple-CWLITEXMEGA.map,--cref   -lm  
+    .
+    Creating load file for Flash: glitchsimple-CWLITEXMEGA.hex
+    avr-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.hex
+    .
+    Creating load file for EEPROM: glitchsimple-CWLITEXMEGA.eep
+    avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
+    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.eep || exit 0
+    .
+    Creating Extended Listing: glitchsimple-CWLITEXMEGA.lss
+    avr-objdump -h -S -z glitchsimple-CWLITEXMEGA.elf > glitchsimple-CWLITEXMEGA.lss
+    .
+    Creating Symbol Table: glitchsimple-CWLITEXMEGA.sym
+    avr-nm -n glitchsimple-CWLITEXMEGA.elf > glitchsimple-CWLITEXMEGA.sym
+    Size after:
+       text	   data	    bss	    dec	    hex	filename
+       3766	     68	     52	   3886	    f2e	glitchsimple-CWLITEXMEGA.elf
+    +--------------------------------------------------------
+    + Built for platform CW-Lite XMEGA
+    +--------------------------------------------------------
+
 
 
 Attack Script
@@ -344,8 +342,8 @@ Attack Script
 Setup
 ~~~~~
 
-Now that we’ve studied the code and have an objective, we can start
-looking at how to control the glitch module via Python. We’ll start by
+Now that we've studied the code and have an objective, we can start
+looking at how to control the glitch module via Python. We'll start by
 connecting to and setting up the ChipWhisperer, then programming it. As
 usual, make sure you modify ``fw_path`` with the path to the file you
 built in the last step.
@@ -380,13 +378,13 @@ built in the last step.
 
     XMEGA Programming flash...
     XMEGA Reading flash...
-    Verified flash OK, 3739 bytes
+    Verified flash OK, 3833 bytes
     
 
 
-Since the firmware enters an infinite loop, we’ll need to reset the
+Since the firmware enters an infinite loop, we'll need to reset the
 target between glitch attempts. ``"Helper_Scripts/Setup.ipynb"`` defines
-a reset function ``reset_target(scope)`` that we’ll use here. Now let’s
+a reset function ``reset_target(scope)`` that we'll use here. Now let's
 make sure the firmware works as we expect. We should get ``"hello\nA"``
 back after resetting the target.
 
@@ -700,33 +698,33 @@ can be accessed by the python ``help`` command:
     
 
 
-Some of the important settings we’ll want to look at here are:
+Some of the important settings we'll want to look at here are:
 
--  clk_src > The clock signal that the glitch DCM is using as input. Can
-   be set to “target” or “clkgen” In this case, we’ll be providing the
-   clock to the target, so we’ll want this set to “clkgen”
+-  clk\_src > The clock signal that the glitch DCM is using as input.
+   Can be set to "target" or "clkgen" In this case, we'll be providing
+   the clock to the target, so we'll want this set to "clkgen"
 -  offset > Where in the output clock to place the glitch. Can be in the
-   range ``[-50, 50]``. Often, we’ll want to try many offsets when
+   range ``[-50, 50]``. Often, we'll want to try many offsets when
    trying to glitch a target.
 -  width > How wide to make the glitch. Can be in the range
    ``[-50, 50]``. Wider glitches more easily cause glitches, but are
-   also more likely to crash the target, meaning we’ll often want to try
+   also more likely to crash the target, meaning we'll often want to try
    a range of widths when attacking a target.
 -  output > The output produced by the glitch module. For clock
-   glitching, clock_xor is often the most useful option.
--  ext_offset > The number of clock cycles after the trigger to put the
+   glitching, clock\_xor is often the most useful option.
+-  ext\_offset > The number of clock cycles after the trigger to put the
    glitch.
 -  repeat > The number of clock cycles to repeat the glitch for. Higher
    values increase the number of instructions that can be glitched, but
    often increase the risk of crashing the target.
--  trigger_src > How to trigger the glitch. For this tutorial, we want
+-  trigger\_src > How to trigger the glitch. For this tutorial, we want
    to automatically trigger the glitch from the trigger pin only after
-   arming the ChipWhipserer, so we’ll use ``ext_single``
+   arming the ChipWhipserer, so we'll use ``ext_single``
 
-In addition, we’ll need to tell ChipWhipserer to use the glitch module’s
+In addition, we'll need to tell ChipWhipserer to use the glitch module's
 output as a clock source for the target by setting
-``scope.io.hs2 = "glitch"``. We’ll also setup a large ``repeat`` to make
-glitching easier. Finally, we’ll also use a ``namedtuple`` to make
+``scope.io.hs2 = "glitch"``. We'll also setup a large ``repeat`` to make
+glitching easier. Finally, we'll also use a ``namedtuple`` to make
 looping through parameters simpler.
 
 
@@ -761,9 +759,9 @@ looping through parameters simpler.
 
     clk_src     = clkgen
     width       = 10.15625
-    width_fine  = 0
+    width_fine  = 1
     offset      = 10.15625
-    offset_fine = 0
+    offset_fine = 1
     trigger_src = ext_single
     arm_timing  = after_scope
     ext_offset  = 0
@@ -776,10 +774,10 @@ looping through parameters simpler.
 Attack Loop
 ~~~~~~~~~~~
 
-Now that the setup’s done and we know how to use the glitch module, we
-can start our attack. The key parameters that we’ll need to iterate
-through are ``width`` and ``offset``, so we’ll need some loops to change
-these. To know if we got a successful glitch, we’ll check for “1234” in
+Now that the setup's done and we know how to use the glitch module, we
+can start our attack. The key parameters that we'll need to iterate
+through are ``width`` and ``offset``, so we'll need some loops to change
+these. To know if we got a successful glitch, we'll check for "1234" in
 the output we get back.
 
 One additional improvement that we can make is to try each parameter
@@ -1045,7 +1043,10 @@ these improvements, our loop looks like:
 
 
 
+.. parsed-literal::
 
+    WARNING:root:SAM3U Serial buffers OVERRUN - data loss has occurred.
+    
 
 
 
@@ -1271,8 +1272,13 @@ these improvements, our loop looks like:
 
 
 
-Now that we’ve tried some glitches, let’s look at the results. There’s
-going to be a lot of data here, so we’ll only print parameters that lead
+
+
+
+
+
+Now that we've tried some glitches, let's look at the results. There's
+going to be a lot of data here, so we'll only print parameters that lead
 to successful glitches:
 
 
@@ -1292,12 +1298,13 @@ to successful glitches:
 
 .. parsed-literal::
 
-    [-8.984375, 9.765625, 0.2, "'\\x00hello\\nA'"]
-    [-6.640625, -1.953125, 0.2, "'\\x00hello\\nA1234'"]
+    [-5.46875, -1.953125, 0.2, "'\\x00hello\\n\\x81'"]
+    [-3.125, -3.125, 0.2, "'\\x00hello\\n\\xa0'"]
+    [3.90625, -6.640625, 0.2, "'\\x00hello\\nAhello\\nA'"]
     
 
 
-With any luck, you’ll have some successful glitches. Create a smaller
+With any luck, you'll have some successful glitches. Create a smaller
 range of offsets and widths where the majority of successful glitches
 can be found. This will greatly speed up future attacks (though be sure
 not to make the bounds too small, since you might miss successful
@@ -1305,7 +1312,7 @@ settings for some attacks). For example, you may have found most of your
 glitches between a width ``[-9,-5]`` and an offset of ``[-37, -40]``, so
 good ranges might be ``[-10, -4]`` and ``[-35, -41]``.
 
-If you didn’t get any successful glitches, note that we only used an
+If you didn't get any successful glitches, note that we only used an
 ``offset`` of ``[-10,10]`` or ``[-49, -30]`` (the max is ``[-50, 50]``).
 Try using a larger range of offsets to see if a successful offset lies
 outside of this range.
@@ -1314,7 +1321,7 @@ If you want to take this attack further, try reducing the ``repeat`` to
 1 and iterating through ``ext_offset`` to look for the precise clock
 cycle where the glitch succeeds. To save time, pick a ``width`` and
 ``offset`` that worked for you and only vary ``ext_offset``. Note that
-even with the right parameters and location, inserting a glitch won’t
+even with the right parameters and location, inserting a glitch won't
 always work, so a better strategy may be to loop infinitely over
 ``ext_offset`` values until you get a successful glitch.
 
@@ -1332,41 +1339,41 @@ Go back to ``glitchsimple.c`` and find the ``glitch3()`` function:
 
 .. code:: c
 
-   void glitch3(void)
-   {
-       char inp[16];
-       char c = 'A';
-       unsigned char cnt = 0;
-       uart_puts("Password:");
+    void glitch3(void)
+    {
+        char inp[16];
+        char c = 'A';
+        unsigned char cnt = 0;
+        uart_puts("Password:");
 
-       while((c != '\n') & (cnt < 16)){
-           c = getch();
-           inp[cnt] = c;
-           cnt++;
-       }
+        while((c != '\n') & (cnt < 16)){
+            c = getch();
+            inp[cnt] = c;
+            cnt++;
+        }
 
-       char passwd[] = "touch";
-       char passok = 1;
+        char passwd[] = "touch";
+        char passok = 1;
 
-       trigger_high();
-       trigger_low();
+        trigger_high();
+        trigger_low();
 
-       //Simple test - doesn't check for too-long password!
-       for(cnt = 0; cnt < 5; cnt++){
-           if (inp[cnt] != passwd[cnt]){
-               passok = 0;
-           }
-       }
+        //Simple test - doesn't check for too-long password!
+        for(cnt = 0; cnt < 5; cnt++){
+            if (inp[cnt] != passwd[cnt]){
+                passok = 0;
+            }
+        }
 
-       if (!passok){
-           uart_puts("Denied\n");
-       } else {
-           uart_puts("Welcome\n");
-       }
-   }
+        if (!passok){
+            uart_puts("Denied\n");
+        } else {
+            uart_puts("Welcome\n");
+        }
+    }
 
-As you might expect, we’ll try to glitch past the ``if(!passok)`` check
-towards the end of the code. Like before, we’ll build and program the
+As you might expect, we'll try to glitch past the ``if(!passok)`` check
+towards the end of the code. Like before, we'll build and program the
 new firmware, using ``FUNC_SEL`` to build with ``glitch3()``.
 
 
@@ -1385,66 +1392,66 @@ new firmware, using ``FUNC_SEL`` to build with ``glitch3()``.
 
 .. parsed-literal::
 
-    rm -f -- glitchsimple-CWLITEXMEGA.hex
-    rm -f -- glitchsimple-CWLITEXMEGA.eep
-    rm -f -- glitchsimple-CWLITEXMEGA.cof
-    rm -f -- glitchsimple-CWLITEXMEGA.elf
-    rm -f -- glitchsimple-CWLITEXMEGA.map
-    rm -f -- glitchsimple-CWLITEXMEGA.sym
-    rm -f -- glitchsimple-CWLITEXMEGA.lss
-    rm -f -- objdir/\*.o
-    rm -f -- objdir/\*.lst
-    rm -f -- glitchsimple.s simpleserial.s XMEGA_AES_driver.s uart.s usart_driver.s xmega_hal.s
-    rm -f -- glitchsimple.d simpleserial.d XMEGA_AES_driver.d uart.d usart_driver.d xmega_hal.d
-    rm -f -- glitchsimple.i simpleserial.i XMEGA_AES_driver.i uart.i usart_driver.i xmega_hal.i
-    .
-    -------- begin --------
-    avr-gcc (GCC) 5.4.0
-    Copyright (C) 2015 Free Software Foundation, Inc.
-    This is free software; see the source for copying conditions.  There is NO
-    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-    
-    .
-    Compiling C: glitchsimple.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/glitchsimple.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/glitchsimple.o.d glitchsimple.c -o objdir/glitchsimple.o 
-    .
-    Compiling C: .././simpleserial/simpleserial.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial.o.d .././simpleserial/simpleserial.c -o objdir/simpleserial.o 
-    .
-    Compiling C: .././hal/xmega/XMEGA_AES_driver.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/XMEGA_AES_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/XMEGA_AES_driver.o.d .././hal/xmega/XMEGA_AES_driver.c -o objdir/XMEGA_AES_driver.o 
-    .
-    Compiling C: .././hal/xmega/uart.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/uart.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/uart.o.d .././hal/xmega/uart.c -o objdir/uart.o 
-    .
-    Compiling C: .././hal/xmega/usart_driver.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/usart_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/usart_driver.o.d .././hal/xmega/usart_driver.c -o objdir/usart_driver.o 
-    .
-    Compiling C: .././hal/xmega/xmega_hal.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/xmega_hal.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/xmega_hal.o.d .././hal/xmega/xmega_hal.c -o objdir/xmega_hal.o 
-    .
-    Linking: glitchsimple-CWLITEXMEGA.elf
-    avr-gcc -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/glitchsimple.o -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/glitchsimple-CWLITEXMEGA.elf.d objdir/glitchsimple.o objdir/simpleserial.o objdir/XMEGA_AES_driver.o objdir/uart.o objdir/usart_driver.o objdir/xmega_hal.o --output glitchsimple-CWLITEXMEGA.elf -Wl,-Map=glitchsimple-CWLITEXMEGA.map,--cref   -lm  
-    .
-    Creating load file for Flash: glitchsimple-CWLITEXMEGA.hex
-    avr-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.hex
-    .
-    Creating load file for EEPROM: glitchsimple-CWLITEXMEGA.eep
-    avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-    --change-section-lma .eeprom=0 --no-change-warnings -O ihex glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.eep || exit 0
-    .
-    Creating Extended Listing: glitchsimple-CWLITEXMEGA.lss
-    avr-objdump -h -S -z glitchsimple-CWLITEXMEGA.elf > glitchsimple-CWLITEXMEGA.lss
-    .
-    Creating Symbol Table: glitchsimple-CWLITEXMEGA.sym
-    avr-nm -n glitchsimple-CWLITEXMEGA.elf > glitchsimple-CWLITEXMEGA.sym
-    Size after:
-       text	   data	    bss	    dec	    hex	filename
-       3674	     68	     52	   3794	    ed2	glitchsimple-CWLITEXMEGA.elf
-    +--------------------------------------------------------
-    + Built for platform CW-Lite XMEGA
-    +--------------------------------------------------------
-    
+    rm -f -- glitchsimple-CWLITEXMEGA.hex
+    rm -f -- glitchsimple-CWLITEXMEGA.eep
+    rm -f -- glitchsimple-CWLITEXMEGA.cof
+    rm -f -- glitchsimple-CWLITEXMEGA.elf
+    rm -f -- glitchsimple-CWLITEXMEGA.map
+    rm -f -- glitchsimple-CWLITEXMEGA.sym
+    rm -f -- glitchsimple-CWLITEXMEGA.lss
+    rm -f -- objdir/\*.o
+    rm -f -- objdir/\*.lst
+    rm -f -- glitchsimple.s simpleserial.s XMEGA_AES_driver.s uart.s usart_driver.s xmega_hal.s
+    rm -f -- glitchsimple.d simpleserial.d XMEGA_AES_driver.d uart.d usart_driver.d xmega_hal.d
+    rm -f -- glitchsimple.i simpleserial.i XMEGA_AES_driver.i uart.i usart_driver.i xmega_hal.i
+    .
+    -------- begin --------
+    avr-gcc (WinAVR 20100110) 4.3.3
+    Copyright (C) 2008 Free Software Foundation, Inc.
+    This is free software; see the source for copying conditions.  There is NO
+    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    
+    .
+    Compiling C: glitchsimple.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/glitchsimple.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/glitchsimple.o.d glitchsimple.c -o objdir/glitchsimple.o 
+    .
+    Compiling C: .././simpleserial/simpleserial.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial.o.d .././simpleserial/simpleserial.c -o objdir/simpleserial.o 
+    .
+    Compiling C: .././hal/xmega/XMEGA_AES_driver.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/XMEGA_AES_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/XMEGA_AES_driver.o.d .././hal/xmega/XMEGA_AES_driver.c -o objdir/XMEGA_AES_driver.o 
+    .
+    Compiling C: .././hal/xmega/uart.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/uart.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/uart.o.d .././hal/xmega/uart.c -o objdir/uart.o 
+    .
+    Compiling C: .././hal/xmega/usart_driver.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/usart_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/usart_driver.o.d .././hal/xmega/usart_driver.c -o objdir/usart_driver.o 
+    .
+    Compiling C: .././hal/xmega/xmega_hal.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/xmega_hal.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/xmega_hal.o.d .././hal/xmega/xmega_hal.c -o objdir/xmega_hal.o 
+    .
+    Linking: glitchsimple-CWLITEXMEGA.elf
+    avr-gcc -mmcu=atxmega128d3 -I. -DGLITCH3 -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/glitchsimple.o -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/glitchsimple-CWLITEXMEGA.elf.d objdir/glitchsimple.o objdir/simpleserial.o objdir/XMEGA_AES_driver.o objdir/uart.o objdir/usart_driver.o objdir/xmega_hal.o --output glitchsimple-CWLITEXMEGA.elf -Wl,-Map=glitchsimple-CWLITEXMEGA.map,--cref   -lm  
+    .
+    Creating load file for Flash: glitchsimple-CWLITEXMEGA.hex
+    avr-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.hex
+    .
+    Creating load file for EEPROM: glitchsimple-CWLITEXMEGA.eep
+    avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
+    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.eep || exit 0
+    .
+    Creating Extended Listing: glitchsimple-CWLITEXMEGA.lss
+    avr-objdump -h -S -z glitchsimple-CWLITEXMEGA.elf > glitchsimple-CWLITEXMEGA.lss
+    .
+    Creating Symbol Table: glitchsimple-CWLITEXMEGA.sym
+    avr-nm -n glitchsimple-CWLITEXMEGA.elf > glitchsimple-CWLITEXMEGA.sym
+    Size after:
+       text	   data	    bss	    dec	    hex	filename
+       3766	     68	     52	   3886	    f2e	glitchsimple-CWLITEXMEGA.elf
+    +--------------------------------------------------------
+    + Built for platform CW-Lite XMEGA
+    +--------------------------------------------------------
+
 
 
 
@@ -1463,11 +1470,11 @@ new firmware, using ``FUNC_SEL`` to build with ``glitch3()``.
 
     XMEGA Programming flash...
     XMEGA Reading flash...
-    Verified flash OK, 3741 bytes
+    Verified flash OK, 3833 bytes
     
 
 
-Now let’s make sure we can communicate with the password check with a
+Now let's make sure we can communicate with the password check with a
 successful password:
 
 
@@ -1492,7 +1499,7 @@ successful password:
 
 .. parsed-literal::
 
-    Passwo¹d:Denied
+    Welcome
     Password:
     
 
@@ -1534,16 +1541,16 @@ get a successful glitch. This is often a much more reliable way to
 glitch targets.
 
 One other thing we need to consider is crashing. In the previous part,
-we didn’t need to worry about crashing since we always reset after a
-glitch attempt anyway. This is no longer true. Instead we’ll need to
+we didn't need to worry about crashing since we always reset after a
+glitch attempt anyway. This is no longer true. Instead we'll need to
 detect glitches and, if they happen, reset the target. Typically a good
 way to detect crashes is by running through the loop again and looking
-for a timeout. This is rather slow, but for this attack, we don’t really
+for a timeout. This is rather slow, but for this attack, we don't really
 have a better method. One thing we can do to speed this up is to
 decrease the adc timeout value (via ``scope.adc.timeout``). Resetting is
 the same in the last part.
 
-Putting it all together (don’t forget to update the width and offset
+Putting it all together (don't forget to update the width and offset
 with ranges that worked in the last part):
 
 Attack Loop
@@ -1781,6 +1788,992 @@ Attack Loop
 .. parsed-literal::
 
     Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
     Done glitching
     
 
@@ -1803,11 +2796,11 @@ Attack Loop
 .. parsed-literal::
 
     8
-    [-3.125, 5.078125, 10, True, "'Welcome\\nPassword:'"]
+    [0.390625, 2.734375, 1, True, "'Welcome\\nPassword:'"]
     
 
 
-With any luck, you should have some successful attacks. If you weren’t
+With any luck, you should have some successful attacks. If you weren't
 able to glitch the target, you may want to try a larger range of
 width/offset values. You may also want to try decreasing the step value
 for these ranges as well.
@@ -1840,7 +2833,7 @@ such as:
    and port them to your target. See how you can glitch past security
    checks.
 -  Use one of the IO triggers discussed in
-   Tutorial_A1_Synchronization_to_Communication_Lines.
+   Tutorial\_A1\_Synchronization\_to\_Communication\_Lines.
 
 Tests
 -----

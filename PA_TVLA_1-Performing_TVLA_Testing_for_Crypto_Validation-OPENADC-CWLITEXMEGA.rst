@@ -9,73 +9,79 @@ Table of Contents
 
    </h1>
 
-.. container:: toc
+.. raw:: html
 
-   .. raw:: html
+   <div class="toc">
 
-      <ul class="toc-item">
+.. raw:: html
 
-   .. raw:: html
+   <ul class="toc-item">
 
-      <li>
+.. raw:: html
 
-   1  Capturing Power Traces
+   <li>
 
-   .. raw:: html
+1  Capturing Power Traces
 
-      <ul class="toc-item">
+.. raw:: html
 
-   .. raw:: html
+   <ul class="toc-item">
 
-      <li>
+.. raw:: html
 
-   1.1  Setup
+   <li>
 
-   .. raw:: html
+1.1  Setup
 
-      </li>
+.. raw:: html
 
-   .. raw:: html
+   </li>
 
-      <li>
+.. raw:: html
 
-   1.2  Capturing Traces
+   <li>
 
-   .. raw:: html
+1.2  Capturing Traces
 
-      </li>
+.. raw:: html
 
-   .. raw:: html
+   </li>
 
-      </ul>
+.. raw:: html
 
-   .. raw:: html
+   </ul>
 
-      </li>
+.. raw:: html
 
-   .. raw:: html
+   </li>
 
-      <li>
+.. raw:: html
 
-   2  Analysis
+   <li>
 
-   .. raw:: html
+2  Analysis
 
-      </li>
+.. raw:: html
 
-   .. raw:: html
+   </li>
 
-      <li>
+.. raw:: html
 
-   3  Tests
+   <li>
 
-   .. raw:: html
+3  Tests
 
-      </li>
+.. raw:: html
 
-   .. raw:: html
+   </li>
 
-      </ul>
+.. raw:: html
+
+   </ul>
+
+.. raw:: html
+
+   </div>
 
 TVLA Testing for Crypto Validation
 ==================================
@@ -92,7 +98,7 @@ validating your crypto implementation.
 
     SCOPETYPE = 'OPENADC'
     PLATFORM = 'CWLITEXMEGA'
-    CRYPTO_TARGET = 'AVRCRYPTOLIB'
+    CRYPTO_TARGET = 'TINYAES128C'
     num_traces = 50
     CHECK_CORR = False
 
@@ -102,8 +108,8 @@ Capturing Power Traces
 Setup
 ~~~~~
 
-We’ll use some helper scripts to make setup and programming easier. If
-you’re using an XMEGA or STM (CWLITEARM) target, binaries with the
+We'll use some helper scripts to make setup and programming easier. If
+you're using an XMEGA or STM (CWLITEARM) target, binaries with the
 correct should be setup for you:
 
 
@@ -136,12 +142,12 @@ correct should be setup for you:
 
     XMEGA Programming flash...
     XMEGA Reading flash...
-    Verified flash OK, 3265 bytes
+    Verified flash OK, 3505 bytes
     
 
 
-In addition, before we capture our traces, we’ll need to create a
-ChipWhipserer project, since that’s what Analyzer expects for an input:
+In addition, before we capture our traces, we'll need to create a
+ChipWhipserer project, since that's what Analyzer expects for an input:
 
 
 **In [5]:**
@@ -155,7 +161,7 @@ Capturing Traces
 
 Below you can see the capture loop. The main body of the loop loads some
 new plaintext, arms the scope, sends the key and plaintext, then finally
-records and our new trace into our trace class. We’ll also keep track of
+records and our new trace into our trace class. We'll also keep track of
 our keys manually for checking our answer later.
 
 
@@ -192,7 +198,7 @@ our keys manually for checking our answer later.
 
 
 Now that we have our traces, we need to tell the project that the traces
-are loaded and add them to the project’s trace manager.
+are loaded and add them to the project's trace manager.
 
 
 **In [7]:**
@@ -202,7 +208,7 @@ are loaded and add them to the project’s trace manager.
     #Save project file
     project.save()
 
-We’re now done with the ChipWhisperer hardware, so we should disconnect
+We're now done with the ChipWhisperer hardware, so we should disconnect
 from the scope and target:
 
 
@@ -298,10 +304,10 @@ itself, based on the recorded data:
 
     
 
-    <div id="6b958a26-357f-473e-9a4f-ca6cca51d759"></div>
+    <div id="62d2b293-3116-48e8-8068-71c5c5dbae96"></div>
     <div class="output_subarea output_javascript ">
     <script type="text/javascript">
-    var element = $('#6b958a26-357f-473e-9a4f-ca6cca51d759');
+    var element = $('#62d2b293-3116-48e8-8068-71c5c5dbae96');
         /* Put everything inside the global mpl namespace */
     window.mpl = {};
     
@@ -312,7 +318,7 @@ itself, based on the recorded data:
         } else if (typeof(MozWebSocket) !== 'undefined') {
             return MozWebSocket;
         } else {
-            alert('Your browser does not have WebSocket support.' +
+            alert('Your browser does not have WebSocket support. ' +
                   'Please try Chrome, Safari or Firefox ≥ 6. ' +
                   'Firefox 4 and 5 are also supported but you ' +
                   'have to enable WebSockets in about:config.');
@@ -529,7 +535,7 @@ itself, based on the recorded data:
     mpl.figure.prototype._init_toolbar = function() {
         var fig = this;
     
-        var nav_element = $('<div/>')
+        var nav_element = $('<div/>');
         nav_element.attr('style', 'width: 100%');
         this.root.append(nav_element);
     
@@ -586,7 +592,7 @@ itself, based on the recorded data:
             var fmt = mpl.extensions[ind];
             var option = $(
                 '<option/>', {selected: fmt === mpl.default_extension}).html(fmt);
-            fmt_picker.append(option)
+            fmt_picker.append(option);
         }
     
         // Add hover states to the ui-buttons
@@ -650,7 +656,7 @@ itself, based on the recorded data:
         var height = Math.abs(y1 - y0);
     
         fig.rubberband_context.clearRect(
-            0, 0, fig.canvas.width, fig.canvas.height);
+            0, 0, fig.canvas.width / mpl.ratio, fig.canvas.height / mpl.ratio);
     
         fig.rubberband_context.strokeRect(min_x, min_y, width, height);
     }
@@ -955,7 +961,7 @@ itself, based on the recorded data:
     mpl.figure.prototype._init_toolbar = function() {
         var fig = this;
     
-        var nav_element = $('<div/>')
+        var nav_element = $('<div/>');
         nav_element.attr('style', 'width: 100%');
         this.root.append(nav_element);
     
@@ -1079,15 +1085,15 @@ itself, based on the recorded data:
 .. raw:: html
 
     <div class="data_html">
-        <div id='4e74e0f2-b2c2-46bc-8019-964350eb8077'></div>
+        <div id='fead8fb6-65ee-426a-b714-849f2b8967c7'></div>
     </div>
 
 
 With multiple excursions beyond the 4.5 limit, you can see that the
-implementation easily fails! The only thing we haven’t done right here
+implementation easily fails! The only thing we haven't done right here
 is figure out *where* the actual crypto stards and ends. This is best
 done using a T-Test or similar targetting the input and output data of
-the crypto operation. In this example we didn’t even cover the complete
+the crypto operation. In this example we didn't even cover the complete
 portion of the algorithm, but this is easier to do with hardware crypto.
 
 Tests

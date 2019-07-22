@@ -2,10 +2,10 @@
 Firmware Build Setup
 ====================
 
-This tutorial will introduce you to the ‘simpleserial’ communications
+This tutorial will introduce you to the 'simpleserial' communications
 system. It will show you how to perform different operations on data
 based on input from the ChipWhisperer software. This can be used for
-building your own system which you wish to ‘break’. All the ``%%bash``
+building your own system which you wish to 'break'. All the ``%%bash``
 blocks can be run either in Jupyter or in your favourite command line
 environment (note that Jupyter resets your path between blocks).
 
@@ -15,12 +15,12 @@ and situations. Make sure you change these parameters in this and future
 tutorials so that they match your hardware setup. Important parameters
 include:
 
--  ``SCOPETYPE`` - Capture hardware to use, for example “OPENADC” for
+-  ``SCOPETYPE`` - Capture hardware to use, for example "OPENADC" for
    CWLite or CWPro.
--  ``PLATFORM`` - Target being attacked. For example, “CW308_STM32F3”
+-  ``PLATFORM`` - Target being attacked. For example, "CW308\_STM32F3"
    for STM32F3 on CW308 board.
 -  ``CRYPTO_TARGET`` - Cryptography library used for encryption
-   functions. For example, “TINYAES128C”.
+   functions. For example, "TINYAES128C".
 
 Some common hardware configurations are (``CRYPTO_TARGET`` is unused in
 this tutorial, but will be used in later tutorials involving AES and
@@ -30,25 +30,25 @@ CWLite 1-part w/ Arm target:
 
 .. code:: python
 
-   SCOPETYPE = 'OPENADC'
-   PLATFORM = 'CWLITEARM'
-   CRYPTO_TARGET = 'TINYAES128C'
+    SCOPETYPE = 'OPENADC'
+    PLATFORM = 'CWLITEARM'
+    CRYPTO_TARGET = 'TINYAES128C'
 
 CWLite 1-part w/ Xmega target
 
 .. code:: python
 
-   SCOPETYPE = 'OPENADC'
-   PLATFORM = 'CWLITEXMEGA'
-   CRYPTO_TARGET = 'AVRCRYPTOLIB'
+    SCOPETYPE = 'OPENADC'
+    PLATFORM = 'CWLITEXMEGA'
+    CRYPTO_TARGET = 'AVRCRYPTOLIB'
 
 CWNano 1-part
 
 .. code:: python
 
-   SCOPETYPE = 'CWNANO'
-   PLATFORM = 'CWNANO'
-   CRYPTO_TARGET = 'TINYAES128C'
+    SCOPETYPE = 'CWNANO'
+    PLATFORM = 'CWNANO'
+    CRYPTO_TARGET = 'TINYAES128C'
 
 
 **In [1]:**
@@ -62,49 +62,49 @@ What is SimpleSerial
 --------------------
 
 SimpleSerial is the communications protocol used for almost all of the
-ChipWhisperer demo project. It’s a very basic serial protocol which can
+ChipWhisperer demo project. It's a very basic serial protocol which can
 be easily implemented on most systems. This system communicates using a
 standard asyncronous serial protocol, 38400 baud, 8-N-1.
 
 All messages are sent in ASCII-text, and are normally terminated with a
-line-feed (‘:raw-latex:`\n`’). This allows you to interact with the
+line-feed (':raw-latex:`\n`'). This allows you to interact with the
 simpleserial system over a standard terminal emulator.
 
 ``x``
 
-   Sending a ‘x’ resets the buffers. This does not require a line-feed
-   termination. It is suggested to always send a stream of x’s to
-   initilize the system in case the device was already in some other
-   mode due to noise/corruption.
+    Sending a 'x' resets the buffers. This does not require a line-feed
+    termination. It is suggested to always send a stream of x's to
+    initilize the system in case the device was already in some other
+    mode due to noise/corruption.
 
 ``k00112233445566778899AABBCCDDEEFF\n``
 
-   Loads the encryption key ``00112233445566778899AABBCCDDEEFF`` into
-   the system. If not called the system may use some default key.
+    Loads the encryption key ``00112233445566778899AABBCCDDEEFF`` into
+    the system. If not called the system may use some default key.
 
 ``pAABBCCDDEEFF00112233445566778899\n``
 
-   Encrypts the data ``AABBCCDDEEFF00112233445566778899`` with the key
-   loaded with the ‘k’ command. The system will respond with a string
-   starting with r, as shown next.
+    Encrypts the data ``AABBCCDDEEFF00112233445566778899`` with the key
+    loaded with the 'k' command. The system will respond with a string
+    starting with r, as shown next.
 
 ``rCBBD4A2B34F2571758FF6A797E09859D\n``
 
-   This is the response from the system. If data has been encrypted with
-   a ‘p’ for example, the system will respond with the ‘r’ sequence
-   automatically. So sending the earlier example means the result of the
-   encryption was ``cbbd4a2b34f2571758ff6a797e09859d``.
+    This is the response from the system. If data has been encrypted
+    with a 'p' for example, the system will respond with the 'r'
+    sequence automatically. So sending the earlier example means the
+    result of the encryption was ``cbbd4a2b34f2571758ff6a797e09859d``.
 
 Building the Basic Example
 --------------------------
 
-To bulid the basic example, you’ll need an appropriate compiler for your
-target. For the ChipWhisperer Lite/Xmega platform, you’ll need
-``avr-gcc`` and ``avr-libc``, while if you’re using an ARM target (like
+To bulid the basic example, you'll need an appropriate compiler for your
+target. For the ChipWhisperer Lite/Xmega platform, you'll need
+``avr-gcc`` and ``avr-libc``, while if you're using an ARM target (like
 the ChipWhisperer Lite/STM32 platform), your need the GNU Toolchain for
-ARM devices. If you’re using a target with a different architecture,
-you’ll need to install the relevant compiler. If you’re unsure, you can
-run the block below. If you’ve got the right stuff installed, you should
+ARM devices. If you're using a target with a different architecture,
+you'll need to install the relevant compiler. If you're unsure, you can
+run the block below. If you've got the right stuff installed, you should
 see some version and copyright info printed for the relevant compiler:
 
 
@@ -126,21 +126,21 @@ see some version and copyright info printed for the relevant compiler:
 
 .. parsed-literal::
 
-    avr-gcc (GCC) 5.4.0
-    Copyright (C) 2015 Free Software Foundation, Inc.
-    This is free software; see the source for copying conditions.  There is NO
-    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-    
-    arm-none-eabi-gcc (15:6.3.1+svn253039-1build1) 6.3.1 20170620
-    Copyright (C) 2016 Free Software Foundation, Inc.
-    This is free software; see the source for copying conditions.  There is NO
-    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-    
-    
+    avr-gcc.exe (WinAVR 20100110) 4.3.3
+    Copyright (C) 2008 Free Software Foundation, Inc.
+    This is free software; see the source for copying conditions.  There is NO
+    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    
+    arm-none-eabi-gcc.exe (GNU Tools for Arm Embedded Processors 7-2018-q2-update) 7.3.1 20180622 (release) [ARM/embedded-7-branch revision 261907]
+    Copyright (C) 2017 Free Software Foundation, Inc.
+    This is free software; see the source for copying conditions.  There is NO
+    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    
+
 
 
 Now that you have the relevant toolchain installed, you should be able
-to build firmware for your desired platform. We’ll begin by creating a
+to build firmware for your desired platform. We'll begin by creating a
 new project based on simpleserial-base by making a new firmware and
 copying the files from the project we want to work on:
 
@@ -154,15 +154,15 @@ copying the files from the project we want to work on:
     mkdir -p simpleserial-base-lab1 && cp -r simpleserial-base/* $_
     cd simpleserial-base-lab1
 
-Next we’ll build the firmware. You’ll need to specify the ``PLATFORM``
+Next we'll build the firmware. You'll need to specify the ``PLATFORM``
 and ``CRYPTO_TARGET`` for your target. To save you from having to
 re-enter this info in every make block, you can edit the python below
-with your platform and crypto_target.
+with your platform and crypto\_target.
 
 Common platforms are CWLITEXMEGA and CWLITEARM. To see a list of
 platforms leave ``PLATFORM`` as is.
 
-This tutorial doesn’t use any crypto, so we can leave ``CRYPTO_TARGET``
+This tutorial doesn't use any crypto, so we can leave ``CRYPTO_TARGET``
 as ``NONE``.
 
 
@@ -191,115 +191,115 @@ successfully run the block below.
 
 .. parsed-literal::
 
-    rm -f -- simpleserial-base-CWLITEXMEGA.hex
-    rm -f -- simpleserial-base-CWLITEXMEGA.eep
-    rm -f -- simpleserial-base-CWLITEXMEGA.cof
-    rm -f -- simpleserial-base-CWLITEXMEGA.elf
-    rm -f -- simpleserial-base-CWLITEXMEGA.map
-    rm -f -- simpleserial-base-CWLITEXMEGA.sym
-    rm -f -- simpleserial-base-CWLITEXMEGA.lss
-    rm -f -- objdir/\*.o
-    rm -f -- objdir/\*.lst
-    rm -f -- simpleserial-base.s simpleserial.s XMEGA_AES_driver.s uart.s usart_driver.s xmega_hal.s
-    rm -f -- simpleserial-base.d simpleserial.d XMEGA_AES_driver.d uart.d usart_driver.d xmega_hal.d
-    rm -f -- simpleserial-base.i simpleserial.i XMEGA_AES_driver.i uart.i usart_driver.i xmega_hal.i
-    .
-    -------- begin --------
-    avr-gcc (GCC) 5.4.0
-    Copyright (C) 2015 Free Software Foundation, Inc.
-    This is free software; see the source for copying conditions.  There is NO
-    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-    
-    .
-    Compiling C: simpleserial-base.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial-base.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial-base.o.d simpleserial-base.c -o objdir/simpleserial-base.o 
-    .
-    Compiling C: .././simpleserial/simpleserial.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial.o.d .././simpleserial/simpleserial.c -o objdir/simpleserial.o 
-    .
-    Compiling C: .././hal/xmega/XMEGA_AES_driver.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/XMEGA_AES_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/XMEGA_AES_driver.o.d .././hal/xmega/XMEGA_AES_driver.c -o objdir/XMEGA_AES_driver.o 
-    .
-    Compiling C: .././hal/xmega/uart.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/uart.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/uart.o.d .././hal/xmega/uart.c -o objdir/uart.o 
-    .
-    Compiling C: .././hal/xmega/usart_driver.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/usart_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/usart_driver.o.d .././hal/xmega/usart_driver.c -o objdir/usart_driver.o 
-    .
-    Compiling C: .././hal/xmega/xmega_hal.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/xmega_hal.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/xmega_hal.o.d .././hal/xmega/xmega_hal.c -o objdir/xmega_hal.o 
-    .
-    Linking: simpleserial-base-CWLITEXMEGA.elf
-    avr-gcc -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial-base.o -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial-base-CWLITEXMEGA.elf.d objdir/simpleserial-base.o objdir/simpleserial.o objdir/XMEGA_AES_driver.o objdir/uart.o objdir/usart_driver.o objdir/xmega_hal.o --output simpleserial-base-CWLITEXMEGA.elf -Wl,-Map=simpleserial-base-CWLITEXMEGA.map,--cref   -lm  
-    .
-    Creating load file for Flash: simpleserial-base-CWLITEXMEGA.hex
-    avr-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.hex
-    .
-    Creating load file for EEPROM: simpleserial-base-CWLITEXMEGA.eep
-    avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-    --change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.eep || exit 0
-    .
-    Creating Extended Listing: simpleserial-base-CWLITEXMEGA.lss
-    avr-objdump -h -S -z simpleserial-base-CWLITEXMEGA.elf > simpleserial-base-CWLITEXMEGA.lss
-    .
-    Creating Symbol Table: simpleserial-base-CWLITEXMEGA.sym
-    avr-nm -n simpleserial-base-CWLITEXMEGA.elf > simpleserial-base-CWLITEXMEGA.sym
-    Size after:
-       text	   data	    bss	    dec	    hex	filename
-       1722	     16	     52	   1790	    6fe	simpleserial-base-CWLITEXMEGA.elf
-    +--------------------------------------------------------
-    + Built for platform CW-Lite XMEGA
-    +--------------------------------------------------------
-    
+    rm -f -- simpleserial-base-CWLITEXMEGA.hex
+    rm -f -- simpleserial-base-CWLITEXMEGA.eep
+    rm -f -- simpleserial-base-CWLITEXMEGA.cof
+    rm -f -- simpleserial-base-CWLITEXMEGA.elf
+    rm -f -- simpleserial-base-CWLITEXMEGA.map
+    rm -f -- simpleserial-base-CWLITEXMEGA.sym
+    rm -f -- simpleserial-base-CWLITEXMEGA.lss
+    rm -f -- objdir/\*.o
+    rm -f -- objdir/\*.lst
+    rm -f -- simpleserial-base.s simpleserial.s XMEGA_AES_driver.s uart.s usart_driver.s xmega_hal.s
+    rm -f -- simpleserial-base.d simpleserial.d XMEGA_AES_driver.d uart.d usart_driver.d xmega_hal.d
+    rm -f -- simpleserial-base.i simpleserial.i XMEGA_AES_driver.i uart.i usart_driver.i xmega_hal.i
+    .
+    -------- begin --------
+    avr-gcc (WinAVR 20100110) 4.3.3
+    Copyright (C) 2008 Free Software Foundation, Inc.
+    This is free software; see the source for copying conditions.  There is NO
+    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    
+    .
+    Compiling C: simpleserial-base.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial-base.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial-base.o.d simpleserial-base.c -o objdir/simpleserial-base.o 
+    .
+    Compiling C: .././simpleserial/simpleserial.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial.o.d .././simpleserial/simpleserial.c -o objdir/simpleserial.o 
+    .
+    Compiling C: .././hal/xmega/XMEGA_AES_driver.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/XMEGA_AES_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/XMEGA_AES_driver.o.d .././hal/xmega/XMEGA_AES_driver.c -o objdir/XMEGA_AES_driver.o 
+    .
+    Compiling C: .././hal/xmega/uart.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/uart.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/uart.o.d .././hal/xmega/uart.c -o objdir/uart.o 
+    .
+    Compiling C: .././hal/xmega/usart_driver.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/usart_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/usart_driver.o.d .././hal/xmega/usart_driver.c -o objdir/usart_driver.o 
+    .
+    Compiling C: .././hal/xmega/xmega_hal.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/xmega_hal.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/xmega_hal.o.d .././hal/xmega/xmega_hal.c -o objdir/xmega_hal.o 
+    .
+    Linking: simpleserial-base-CWLITEXMEGA.elf
+    avr-gcc -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial-base.o -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial-base-CWLITEXMEGA.elf.d objdir/simpleserial-base.o objdir/simpleserial.o objdir/XMEGA_AES_driver.o objdir/uart.o objdir/usart_driver.o objdir/xmega_hal.o --output simpleserial-base-CWLITEXMEGA.elf -Wl,-Map=simpleserial-base-CWLITEXMEGA.map,--cref   -lm  
+    .
+    Creating load file for Flash: simpleserial-base-CWLITEXMEGA.hex
+    avr-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.hex
+    .
+    Creating load file for EEPROM: simpleserial-base-CWLITEXMEGA.eep
+    avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
+    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.eep || exit 0
+    .
+    Creating Extended Listing: simpleserial-base-CWLITEXMEGA.lss
+    avr-objdump -h -S -z simpleserial-base-CWLITEXMEGA.elf > simpleserial-base-CWLITEXMEGA.lss
+    .
+    Creating Symbol Table: simpleserial-base-CWLITEXMEGA.sym
+    avr-nm -n simpleserial-base-CWLITEXMEGA.elf > simpleserial-base-CWLITEXMEGA.sym
+    Size after:
+       text	   data	    bss	    dec	    hex	filename
+       1798	     16	     52	   1866	    74a	simpleserial-base-CWLITEXMEGA.elf
+    +--------------------------------------------------------
+    + Built for platform CW-Lite XMEGA
+    +--------------------------------------------------------
+
 
 
 Modifying the Basic Example
 ---------------------------
 
-At this point we want to modify the system to perform ‘something’ with
+At this point we want to modify the system to perform 'something' with
 the data, such that we can confirm the system is working. To do so, open
 the file ``simpleserial-base.c`` in the simpleserial-base-lab1 folder
-with a code editor such as Programmer’s Notepad (which ships with
+with a code editor such as Programmer's Notepad (which ships with
 WinAVR).
 
 Find the following code block towards the end of the file:
 
 .. code:: c
 
-   /**********************************
-    * Start user-specific code here. */
-   trigger_high();
+    /**********************************
+     * Start user-specific code here. */
+    trigger_high();
 
-   //16 hex bytes held in 'pt' were sent
-   //from the computer. Store your response
-   //back into 'pt', which will send 16 bytes
-   //back to computer. Can ignore of course if
-   //not needed
+    //16 hex bytes held in 'pt' were sent
+    //from the computer. Store your response
+    //back into 'pt', which will send 16 bytes
+    //back to computer. Can ignore of course if
+    //not needed
 
-   trigger_low();
-   /* End user-specific code here. *
+    trigger_low();
+    /* End user-specific code here. *
 
 Now modify it to increment the value of each data byte:
 
 .. code:: c
 
-   /**********************************
-    * Start user-specific code here. */
-   trigger_high();
+    /**********************************
+     * Start user-specific code here. */
+    trigger_high();
 
-   //16 hex bytes held in 'pt' were sent
-   //from the computer. Store your response
-   //back into 'pt', which will send 16 bytes
-   //back to computer. Can ignore of course if
-   //not needed
+    //16 hex bytes held in 'pt' were sent
+    //from the computer. Store your response
+    //back into 'pt', which will send 16 bytes
+    //back to computer. Can ignore of course if
+    //not needed
 
-   for(int i = 0; i < 16; i++){
-       pt[i]++;
-   }
+    for(int i = 0; i < 16; i++){
+        pt[i]++;
+    }
 
-   trigger_low();
-   /* End user-specific code here. *
-    ********************************/
+    trigger_low();
+    /* End user-specific code here. *
+     ********************************/
 
 Then rebuild the file with ``make``:
 
@@ -319,83 +319,83 @@ Then rebuild the file with ``make``:
 
 .. parsed-literal::
 
-    rm -f -- simpleserial-base-CWLITEXMEGA.hex
-    rm -f -- simpleserial-base-CWLITEXMEGA.eep
-    rm -f -- simpleserial-base-CWLITEXMEGA.cof
-    rm -f -- simpleserial-base-CWLITEXMEGA.elf
-    rm -f -- simpleserial-base-CWLITEXMEGA.map
-    rm -f -- simpleserial-base-CWLITEXMEGA.sym
-    rm -f -- simpleserial-base-CWLITEXMEGA.lss
-    rm -f -- objdir/\*.o
-    rm -f -- objdir/\*.lst
-    rm -f -- simpleserial-base.s simpleserial.s XMEGA_AES_driver.s uart.s usart_driver.s xmega_hal.s
-    rm -f -- simpleserial-base.d simpleserial.d XMEGA_AES_driver.d uart.d usart_driver.d xmega_hal.d
-    rm -f -- simpleserial-base.i simpleserial.i XMEGA_AES_driver.i uart.i usart_driver.i xmega_hal.i
-    .
-    -------- begin --------
-    avr-gcc (GCC) 5.4.0
-    Copyright (C) 2015 Free Software Foundation, Inc.
-    This is free software; see the source for copying conditions.  There is NO
-    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-    
-    .
-    Compiling C: simpleserial-base.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial-base.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial-base.o.d simpleserial-base.c -o objdir/simpleserial-base.o 
-    .
-    Compiling C: .././simpleserial/simpleserial.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial.o.d .././simpleserial/simpleserial.c -o objdir/simpleserial.o 
-    .
-    Compiling C: .././hal/xmega/XMEGA_AES_driver.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/XMEGA_AES_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/XMEGA_AES_driver.o.d .././hal/xmega/XMEGA_AES_driver.c -o objdir/XMEGA_AES_driver.o 
-    .
-    Compiling C: .././hal/xmega/uart.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/uart.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/uart.o.d .././hal/xmega/uart.c -o objdir/uart.o 
-    .
-    Compiling C: .././hal/xmega/usart_driver.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/usart_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/usart_driver.o.d .././hal/xmega/usart_driver.c -o objdir/usart_driver.o 
-    .
-    Compiling C: .././hal/xmega/xmega_hal.c
-    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/xmega_hal.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/xmega_hal.o.d .././hal/xmega/xmega_hal.c -o objdir/xmega_hal.o 
-    .
-    Linking: simpleserial-base-CWLITEXMEGA.elf
-    avr-gcc -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial-base.o -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial-base-CWLITEXMEGA.elf.d objdir/simpleserial-base.o objdir/simpleserial.o objdir/XMEGA_AES_driver.o objdir/uart.o objdir/usart_driver.o objdir/xmega_hal.o --output simpleserial-base-CWLITEXMEGA.elf -Wl,-Map=simpleserial-base-CWLITEXMEGA.map,--cref   -lm  
-    .
-    Creating load file for Flash: simpleserial-base-CWLITEXMEGA.hex
-    avr-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.hex
-    .
-    Creating load file for EEPROM: simpleserial-base-CWLITEXMEGA.eep
-    avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-    --change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.eep || exit 0
-    .
-    Creating Extended Listing: simpleserial-base-CWLITEXMEGA.lss
-    avr-objdump -h -S -z simpleserial-base-CWLITEXMEGA.elf > simpleserial-base-CWLITEXMEGA.lss
-    .
-    Creating Symbol Table: simpleserial-base-CWLITEXMEGA.sym
-    avr-nm -n simpleserial-base-CWLITEXMEGA.elf > simpleserial-base-CWLITEXMEGA.sym
-    Size after:
-       text	   data	    bss	    dec	    hex	filename
-       1722	     16	     52	   1790	    6fe	simpleserial-base-CWLITEXMEGA.elf
-    +--------------------------------------------------------
-    + Built for platform CW-Lite XMEGA
-    +--------------------------------------------------------
-    
+    rm -f -- simpleserial-base-CWLITEXMEGA.hex
+    rm -f -- simpleserial-base-CWLITEXMEGA.eep
+    rm -f -- simpleserial-base-CWLITEXMEGA.cof
+    rm -f -- simpleserial-base-CWLITEXMEGA.elf
+    rm -f -- simpleserial-base-CWLITEXMEGA.map
+    rm -f -- simpleserial-base-CWLITEXMEGA.sym
+    rm -f -- simpleserial-base-CWLITEXMEGA.lss
+    rm -f -- objdir/\*.o
+    rm -f -- objdir/\*.lst
+    rm -f -- simpleserial-base.s simpleserial.s XMEGA_AES_driver.s uart.s usart_driver.s xmega_hal.s
+    rm -f -- simpleserial-base.d simpleserial.d XMEGA_AES_driver.d uart.d usart_driver.d xmega_hal.d
+    rm -f -- simpleserial-base.i simpleserial.i XMEGA_AES_driver.i uart.i usart_driver.i xmega_hal.i
+    .
+    -------- begin --------
+    avr-gcc (WinAVR 20100110) 4.3.3
+    Copyright (C) 2008 Free Software Foundation, Inc.
+    This is free software; see the source for copying conditions.  There is NO
+    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    
+    .
+    Compiling C: simpleserial-base.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial-base.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial-base.o.d simpleserial-base.c -o objdir/simpleserial-base.o 
+    .
+    Compiling C: .././simpleserial/simpleserial.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial.o.d .././simpleserial/simpleserial.c -o objdir/simpleserial.o 
+    .
+    Compiling C: .././hal/xmega/XMEGA_AES_driver.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/XMEGA_AES_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/XMEGA_AES_driver.o.d .././hal/xmega/XMEGA_AES_driver.c -o objdir/XMEGA_AES_driver.o 
+    .
+    Compiling C: .././hal/xmega/uart.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/uart.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/uart.o.d .././hal/xmega/uart.c -o objdir/uart.o 
+    .
+    Compiling C: .././hal/xmega/usart_driver.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/usart_driver.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/usart_driver.o.d .././hal/xmega/usart_driver.c -o objdir/usart_driver.o 
+    .
+    Compiling C: .././hal/xmega/xmega_hal.c
+    avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/xmega_hal.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/xmega_hal.o.d .././hal/xmega/xmega_hal.c -o objdir/xmega_hal.o 
+    .
+    Linking: simpleserial-base-CWLITEXMEGA.elf
+    avr-gcc -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS_VER=SS_VER_1_1 -DHAL_TYPE=HAL_xmega -DPLATFORM=CWLITEXMEGA -DF_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial-base.o -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99 -MMD -MP -MF .dep/simpleserial-base-CWLITEXMEGA.elf.d objdir/simpleserial-base.o objdir/simpleserial.o objdir/XMEGA_AES_driver.o objdir/uart.o objdir/usart_driver.o objdir/xmega_hal.o --output simpleserial-base-CWLITEXMEGA.elf -Wl,-Map=simpleserial-base-CWLITEXMEGA.map,--cref   -lm  
+    .
+    Creating load file for Flash: simpleserial-base-CWLITEXMEGA.hex
+    avr-objcopy -O ihex -R .eeprom -R .fuse -R .lock -R .signature simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.hex
+    .
+    Creating load file for EEPROM: simpleserial-base-CWLITEXMEGA.eep
+    avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
+    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.eep || exit 0
+    .
+    Creating Extended Listing: simpleserial-base-CWLITEXMEGA.lss
+    avr-objdump -h -S -z simpleserial-base-CWLITEXMEGA.elf > simpleserial-base-CWLITEXMEGA.lss
+    .
+    Creating Symbol Table: simpleserial-base-CWLITEXMEGA.sym
+    avr-nm -n simpleserial-base-CWLITEXMEGA.elf > simpleserial-base-CWLITEXMEGA.sym
+    Size after:
+       text	   data	    bss	    dec	    hex	filename
+       1798	     16	     52	   1866	    74a	simpleserial-base-CWLITEXMEGA.elf
+    +--------------------------------------------------------
+    + Built for platform CW-Lite XMEGA
+    +--------------------------------------------------------
+
 
 
 Python Script
 -------------
 
-We’ll end by uploading the firmware onto the target and communicating
+We'll end by uploading the firmware onto the target and communicating
 with it via a python script. Depending on your target, uploading
 firmware will be different. For the XMega and STM32 targets, you can use
-ChipWhisperer’s interface. Otherwise, you’ll likely need to use and
+ChipWhisperer's interface. Otherwise, you'll likely need to use and
 external programmer. If you have a CW1173/Xmega board, you can run the
 following blocks without modification. After running the final block,
 you should see two sets of hexadecimal numbers, with the second having
 values one higher than the first.
 
-We’ll begin by importing the ChipWhisperer module. This will allow us to
+We'll begin by importing the ChipWhisperer module. This will allow us to
 connect to and communicate with the ChipWhisperer hardware. The
-ChipWhisperer module also includes analysis software, which we’ll be
+ChipWhisperer module also includes analysis software, which we'll be
 looking at in later tutorials.
 
 
@@ -614,16 +614,16 @@ submodules, functions, etc.:
                 Connected target object specified by target_type.
     
     FILE
-        c:\users\user\documents\chipwhisperer\software\chipwhisperer\__init__.py
+        c:\users\user\code\term3\chipwhisperer\software\chipwhisperer\__init__.py
     
     
     
 
 
-Next we’ll need to connect to the scope end of the hardware. Starting
+Next we'll need to connect to the scope end of the hardware. Starting
 with ChipWhisperer 5.1, ``cw.scope`` will attempt to autodetect which
 scope type you have (though if you have multiple ChipWhisperers
-connected, you’ll need to specify the serial number). If you’d like, you
+connected, you'll need to specify the serial number). If you'd like, you
 can still specify the scope type.
 
 
@@ -795,8 +795,8 @@ can still specify the scope type.
     
 
 
-We’ll also need to setup the interface to the target (typically what we
-want to attack). Like with scopes, there’s a few different interfaces we
+We'll also need to setup the interface to the target (typically what we
+want to attack). Like with scopes, there's a few different interfaces we
 can use, which are available through ``scope.targets.<target_type>``.
 The default, SimpleSerial, communicates over UART and is almost always
 the correct choice.
@@ -808,12 +808,12 @@ the correct choice.
 
     target = cw.target(scope, cw.targets.SimpleSerial)
 
-Next, we’ll do some basic setup. Most of these settings don’t matter for
+Next, we'll do some basic setup. Most of these settings don't matter for
 now, but take note of the ``scope.clock`` and ``scope.io``, which setup
 the clock and serial io lines, which needs to be done before programming
 the target.
 
-**Some targets require settings different than what’s below. Check the
+**Some targets require settings different than what's below. Check the
 relevant wiki article for your target for more information**
 
 
@@ -890,12 +890,12 @@ And finally actually programming the device:
 
     XMEGA Programming flash...
     XMEGA Reading flash...
-    Verified flash OK, 1737 bytes
+    Verified flash OK, 1813 bytes
     
 
 
-Finally, we’ll load some text, send it to the target, and read it back.
-We also capture a trace here, but don’t do anything with it yet (that
+Finally, we'll load some text, send it to the target, and read it back.
+We also capture a trace here, but don't do anything with it yet (that
 will come in later tutorials). You should see your original text with
 the received text below it.
 
@@ -928,8 +928,8 @@ the received text below it.
 
 .. parsed-literal::
 
-    b'96e452792a92ea14f8b3da6185d645ca'
-    b'96e452792a92ea14f8b3da6185d645ca'
+    b'0a08d9a008fe6cb2c4410142cd5a99ad'
+    b'0a08d9a008fe6cb2c4410142cd5a99ad'
     
 
 
@@ -953,15 +953,15 @@ You can also just run:
 
 .. parsed-literal::
 
-    b'96e452792a92ea14f8b3da6185d645ca'
-    b'96e452792a92ea14f8b3da6185d645ca'
+    b'0a08d9a008fe6cb2c4410142cd5a99ad'
+    b'0a08d9a008fe6cb2c4410142cd5a99ad'
     
 
 
-Now that we’re done with this tutorial, we’ll need to disconnect from
+Now that we're done with this tutorial, we'll need to disconnect from
 the ChipWhisperer. This will prevent this session from interferening
 from later ones (most notably with a ``USB can't claim interface``
-error). Don’t worry if you forget, unplugging and replugging the
+error). Don't worry if you forget, unplugging and replugging the
 ChipWhipserer should fix it.
 
 
@@ -977,8 +977,8 @@ Future Tutorials
 
 The next tutorials that you run will start using helper scripts to make
 setup a little faster and more consistent between tutorials. Those
-scripts run mostly the same setup code that we did here, but if you’d
-like to see exactly what they’re doing, they’re all included in the
+scripts run mostly the same setup code that we did here, but if you'd
+like to see exactly what they're doing, they're all included in the
 ``Helper_Scripts`` folder.
 
 For example, the scope setup (gain, clock, etc) is taken care of by
