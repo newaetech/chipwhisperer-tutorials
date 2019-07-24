@@ -2,6 +2,16 @@
 Introduction to Vcc Glitch Attacks
 ==================================
 
+Supported setups:
+
+SCOPES:
+
+-  OPENADC
+
+PLATFORMS:
+
+-  CWLITEARM
+
 
 **In [1]:**
 
@@ -215,7 +225,7 @@ the ChipWhisperer, then programming it. As usual, make sure you modify
 
 .. code:: ipython3
 
-    %run "Helper_Scripts/Setup.ipynb"
+    %run "Helper_Scripts/Setup_Generic.ipynb"
 
 
 **In [4]:**
@@ -400,7 +410,7 @@ required for getting a glitch.
         presamples = 0
         samples    = 5000
         decimate   = 1
-        trig_count = 8531154
+        trig_count = 8469380
     clock = 
         adc_src       = clkgen_x4
         adc_phase     = 0
@@ -563,8 +573,9 @@ All together (with some additional error checking), this looks like:
     
     40000 200 200 6
     
-    40000 200 200 9
+    40000 200 200 8
     
+    40000 200 200 10
     40000 200 200 11
     
     40000 200 200 13
@@ -572,8 +583,8 @@ All together (with some additional error checking), this looks like:
     40000 200 200 15
     
     40000 200 200 17
-    40000 200 200 18
     
+    40000 200 200 19
     40000 200 200 20
     
     40000 200 200 22
@@ -581,18 +592,18 @@ All together (with some additional error checking), this looks like:
     40000 200 200 24
     
     40000 200 200 26
-    40000 200 200 27
     
-    40000 200 200 29
+    40000 200 200 28
     
     40000 200 200 31
     
     40000 200 200 33
     
     40000 200 200 35
-    4
-    40000 200 200 38
     
+    40000 200 200 37
+    
+    40000 200 200 39
     40000 200 200 40
     
     40000 200 200 42
@@ -757,7 +768,7 @@ in below:
 
 .. parsed-literal::
 
-    [38.671875, -28.515625, 0.2, 0.0]
+    [38.671875, -28.515625, 0.4, 0.0]
     
 
 
@@ -793,27 +804,33 @@ Then, sorting by success rate:
 
 .. parsed-literal::
 
+    [38.671875, -28.515625, 0.4, 0.0]
     [39.0625, -28.515625, 0.4, 0.0]
-    [38.671875, -28.515625, 0.2, 0.0]
     
 
 
 Going Further
 ~~~~~~~~~~~~~
 
-There's a lot more you can do with this attack: \* If you still weren't
-able to get any glitches, create an attack loop that scans a larger
-range of offsets and ranges. You may also have to scan the offset\_fine
-and width\_fine glitch settings to find glitches. \* Glitching different
-instructions will produce different results. Try using your best glitch
-settings from the previous part and scanning ext offset ranges to
-produce different glitches \* During our attack loop, we only checked
-for glitches in the first number (40000). You may want to examine the
-other numbers for glitches as well \* Open the listing file (``.lss``)
-and view the assembly of the ``glitch_infinite()`` function. Can you
-explain the different glitch effects you saw? \* Try using the glitch
-settings you found in this tutorial to glitch other functions in the
-``glitchsimple.c`` file.
+There's a lot more you can do with this attack:
+
+-  If you still weren't able to get any glitches, create an attack loop
+   that scans a larger range of offsets and ranges. You may also have to
+   scan the offset\_fine and width\_fine glitch settings to find
+   glitches.
+-  Glitching different instructions will produce different results. Try
+   using your best glitch settings from the previous part and scanning
+   ext offset ranges to produce different glitches
+
+   -  During our attack loop, we only checked for glitches in the first
+      number (40000). You may want to examine the other numbers for
+      glitches as well
+   -  Open the listing file (``.lss``) and view the assembly of the
+      ``glitch_infinite()`` function. Can you explain the different
+      glitch effects you saw?
+
+-  Try using the glitch settings you found in this tutorial to glitch
+   other functions in the ``glitchsimple.c`` file.
 
 Otherwise, we're done with the tutorial. You can now disconnect from the
 ChipWhisperer:

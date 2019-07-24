@@ -2,6 +2,16 @@
 RSA FaultAttack
 ===============
 
+Supported setups:
+
+SCOPES:
+
+-  OPENADC
+
+PLATFORMS:
+
+-  CWLITEARM
+
 This advanced tutorial will demonstrate an attack on RSA signatures that
 use the Chinese Remainder Theorem as an optimization. This tutorial will
 make use of glitching, so it's recommended that you complete at least
@@ -45,24 +55,24 @@ but we will give a quick summary.
    using publically available information.
 -  This means that some information is public, while other information
    is private.
--  Public information includes the public modulus n, and the public
+-  Public information includes the public modulus N, and the public
    exponent e
 -  Private information includes the private exponent d, as well as p and
-   q, which are prime factors of n
+   q, which are prime factors of N
 -  The public information can be freely shared, but learning any private
    information compromises the whole system
 
 The math of RSA (once you have all the key parts generated) is actually
 pretty simple. To sign the message, the following equation can be
 applied (with signature s, message m, private exponent d, and public
-modulus n):
+modulus N):
 
-.. math:: s = m^d({mod}\ n)
+.. math:: s = m^d({mod}\ N)
 
 To verify a signature, the following equation is used (with signature s,
-public exponent e, message m, and public modulus n):
+public exponent e, message m, and public modulus N):
 
-.. math:: s^e = m(mod\ n)
+.. math:: s^e = m(mod\ N)
 
 Despite the simplicity of these equations, signing messages in
 particular is a very slow operation, with the implementation from
@@ -77,9 +87,9 @@ can make.
 Chinese Remainder Theorem (CRT)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Instead of computing :math:`s = m^d(mod\ n)`, we can instead break n
+Instead of computing :math:`s = m^d(mod\ N)`, we can instead break N
 into two primes, p and q, such that :math:`n = pq`, then use those to
-calculate the signature instead of n. As you might have guessed, p and q
+calculate the signature instead of N. As you might have guessed, p and q
 are the same private information we talked about earlier. Bascially, if
 we learn either, we'll be able to derive the rest of the private
 information fairly easily. We won't go into all the math, but here's the
@@ -90,7 +100,7 @@ important operations:
    :math:`s_2 = m^{d_q}(mod\ q)`
 -  Combine :math:`s_1` and :math:`s_2` into :math:`s` via CRT
 
-Since p and q are much smaller than n, creating signatures is much much
+Since p and q are much smaller than N, creating signatures is much much
 faster this way. As such, many popular RSA implementations (including
 MBEDTLS) use CRT to speed up RSA.
 
@@ -108,7 +118,7 @@ faulty signatures :math:`s_2'`, which generates :math:`s'`):
 .. math:: s'^e \neq m(mod\ q) \Rightarrow s'^e - m \neq 0 (mod\ q)
 
 The result of this is that p will be a factor of :math:`s'^e - m`, but q
-and n will not be. Since p is also a factor of N, what follows is that:
+and N will not be. Since p is also a factor of N, what follows is that:
 
 .. math:: p = gcd(s'^e - m, N)
 
@@ -359,7 +369,7 @@ Start by initializing the ChipWhisperer:
 
 .. code:: ipython3
 
-    %run "Helper_Scripts/Setup.ipynb"
+    %run "Helper_Scripts/Setup_Generic.ipynb"
 
 
 **In [5]:**
@@ -617,8 +627,7 @@ proceeding, but we could also read back the whole thing:
 .. code:: python
 
     # Read back signature
-    num_char = target.ser.inWaiting()
-    output = target.ser.read(num_char, timeout=10)
+    output = target.read(timeout=10)
         if "4F09799" not in output:
             #Something abnormal has happened
 
@@ -651,14 +660,12 @@ make sure everything looks okay:
         target.go_cmd = '1\\n'
         target.go()
         time.sleep(0.2)
-        num_char = target.ser.inWaiting()
-        output += target.ser.read(num_char, timeout=10)
+        output += target.read(timeout=10)
 
         target.go_cmd = '2\\n'
         target.go()
         time.sleep(0.2)
-        num_char = target.ser.inWaiting()
-        output += target.ser.read(num_char, timeout=10)
+        output += target.read(timeout=10)
         
         # strip out extra simpleserial stuff
         newout = output.replace("r", "").replace("\nz00","").replace("\n","")
@@ -781,7 +788,7 @@ standard's fairly simple. PKCS#1 v1.5 padding looks like:
 \|00\|01\|ff...\|00\|hash\_prefix\|message\_hash\|
 
 Here, the ff... part is a string of ff bytes long enough to make the
-size of the padded message the same as n, while hash\_prefix is an
+size of the padded message the same as N, while hash\_prefix is an
 identifier number for the hash algorithm used on message\_hash. In our
 case, SHA256 has the hash prefix
 ``3031300d060960864801650304020105000420``.
@@ -939,7 +946,7 @@ Going Further
 There's still more you can do with this attack:
 
 -  You can try glitching the other part of the signature calculation to
-   verify that you get the other prime factor of n out
+   verify that you get the other prime factor of N out
 -  We used clock glitching in this tutorial. You may want to try it with
    voltage glitching as well
 

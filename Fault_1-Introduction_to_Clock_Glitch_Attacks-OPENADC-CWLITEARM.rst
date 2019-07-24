@@ -2,11 +2,21 @@
 Introduction to Clock Glitch Attacks
 ====================================
 
-This advanced tutorial will demonstrate clock glitch attacks using the
-ChipWhisperer system. This will introduce you to many required features
-of the ChipWhisperer system when it comes to glitching. This will be
-built on in later tutorials to generate voltage glitching attacks, or
-when you wish to attack other targets.
+Supported setups:
+
+SCOPES:
+
+-  OPENADC
+
+PLATFORMS:
+
+-  CWLITEARM
+-  CWLITEXMEGA
+
+This advanced tutorial will introduce clock glitch attacks using the
+ChipWhisperer system, demonstrating some of its glitching features, as
+well as the importance of glitch attacks. This will be built on in later
+tutorials to attack different types of firmware.
 
 
 **In [1]:**
@@ -177,10 +187,8 @@ Setting Up Firmware
 -------------------
 
 As with previous tutorials, we'll start by creating a new project from
-base firmware, as well as setting up our ``PLATFORM`` and
-``CRYPTO_TARGET``. This tutorial doesn't use any crypto, so we'll leave
-the latter option as ``NONE``. This time, we'll be using
-``glitch-simple``:
+base firmware. This tutorial doesn't use any crypto, so we'll leave the
+latter option as ``NONE``. This time, we'll be using ``glitch-simple``:
 
 Now navigate to the ``glitch-simple-lab1`` folder and open
 ``glitchsimple.c`` in a code editor. Scroll down until you find the
@@ -353,7 +361,7 @@ built in the last step.
 
 .. code:: ipython3
 
-    %run "Helper_Scripts/Setup.ipynb"
+    %run "Helper_Scripts/Setup_Generic.ipynb"
 
 
 **In [4]:**
@@ -386,10 +394,10 @@ built in the last step.
 
 
 Since the firmware enters an infinite loop, we'll need to reset the
-target between glitch attempts. ``"Helper_Scripts/Setup.ipynb"`` defines
-a reset function ``reset_target(scope)`` that we'll use here. Now let's
-make sure the firmware works as we expect. We should get ``"hello\nA"``
-back after resetting the target.
+target between glitch attempts. ``"Helper_Scripts/Setup_Generic.ipynb"``
+defines a reset function ``reset_target(scope)`` that we'll use here.
+Now let's make sure the firmware works as we expect. We should get
+``"hello\nA"`` back after resetting the target.
 
 
 **In [6]:**
@@ -423,7 +431,9 @@ Glitch Module
 
 All the settings/methods for the glitch module can be accessed under
 ``scope.glitch``. As usual, documentation for the settings and methods
-can be accessed by the python ``help`` command:
+can be accessed on
+`ReadtheDocs <https://chipwhisperer.readthedocs.io/en/latest/api.html>`__
+or by the python ``help`` command:
 
 
 **In [7]:**
@@ -1294,27 +1304,28 @@ to successful glitches:
 .. parsed-literal::
 
     [-10.15625, -38.28125, 1.0, "'\\x00hello\\nA1234'"]
-    [-10.15625, -37.109375, 0.8, "'\\x00hello\\nA1234'"]
+    [-10.15625, -37.109375, 1.0, "'\\x00hello\\nA1234'"]
     [-8.984375, -38.28125, 1.0, "'\\x00hello\\nA1234'"]
     [-8.984375, -37.109375, 1.0, "'\\x00hello\\nA1234'"]
     [-7.8125, -38.28125, 1.0, "'\\x00hello\\nA1234'"]
     [-7.8125, -37.109375, 1.0, "'\\x00hello\\nA1234'"]
     [-6.640625, -38.28125, 1.0, "'\\x00hello\\nA1234'"]
-    [-6.640625, -37.109375, 0.8, "'\\x00hello\\nA1234'"]
+    [-6.640625, -37.109375, 1.0, "'\\x00hello\\nA1234'"]
     [-5.46875, -38.28125, 1.0, "'\\x00hello\\nA1234'"]
     [-5.46875, -37.109375, 1.0, "'\\x00hello\\nA1234'"]
     [-4.296875, -38.28125, 1.0, "'\\x00hello\\nA1234'"]
-    [-4.296875, -37.109375, 1.0, "'\\x00hello\\nA1234'"]
+    [-4.296875, -37.109375, 0.8, "'\\x00hello\\nA1234'"]
     [-3.125, -38.28125, 1.0, "'\\x00hello\\nA1234'"]
     [-3.125, -37.109375, 1.0, "'\\x00hello\\nA1234'"]
     [-1.953125, -38.28125, 1.0, "'\\x00hello\\nA1234'"]
-    [-1.953125, -37.109375, 0.8, "'\\x00hello\\nA1234'"]
-    [0.390625, -35.9375, 0.2, "'\\x00hello\\nA'"]
-    [0.390625, -31.25, 0.2, "'\\x00hello\\nA'"]
-    [1.5625, -42.96875, 0.2, "'\\x00hello\\nA1234'"]
+    [-1.953125, -37.109375, 1.0, "'\\x00hello\\nA1234'"]
+    [0.390625, -47.65625, 0.2, "'\\x00hello\\nA'"]
+    [0.390625, -44.140625, 0.2, "'\\x00hello\\nA'"]
+    [0.390625, -37.109375, 0.2, "'\\x00hello\\nA'"]
+    [0.390625, -31.25, 0.2, "'\\x00hello\\nA1234'"]
     [1.5625, -41.796875, 0.2, "'\\x00hello\\nA'"]
-    [1.5625, -37.109375, 0.2, "'\\x00hello\\nA1234'"]
-    [1.5625, -30.078125, 0.2, "'\\x00hello\\nA1234'"]
+    [1.5625, -37.109375, 0.2, "'\\x00hello\\nA'"]
+    [1.5625, -31.25, 0.2, "'\\x00hello\\nA'"]
     
 
 
@@ -2366,6 +2377,57 @@ Attack Loop
 .. parsed-literal::
 
     Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
+    
+
+
+
+
+.. parsed-literal::
+
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
+    
+
+
+
+
+.. parsed-literal::
+
+    Timeout happened during acquisition
     Done glitching
     
 
@@ -2423,17 +2485,11 @@ powerful tool for bypassing authentication in embedded hardware devices.
 There are many ways to expand your knowledge with additional practice,
 such as:
 
--  Manual glitches can be triggered by calling
-   ``scope.glitch.manualTrigger()`` and
-   ``scope.glitch.trigger_src = "manual"``. Try using manual glitches to
-   simply glitch past the prompt in ``glitch3()``.
 -  Completing the VCC Glitch Attacks tutorial (not yet available), which
    introduces glitching via voltage instead of the clock.
 -  Download some example source code (bootloaders, login prompts, etc)
    and port them to your target. See how you can glitch past security
    checks.
--  Use one of the IO triggers discussed in
-   Tutorial\_A1\_Synchronization\_to\_Communication\_Lines.
 
 Tests
 -----
