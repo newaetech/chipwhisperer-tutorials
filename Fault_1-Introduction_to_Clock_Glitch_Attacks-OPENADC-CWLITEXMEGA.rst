@@ -2,11 +2,21 @@
 Introduction to Clock Glitch Attacks
 ====================================
 
-This advanced tutorial will demonstrate clock glitch attacks using the
-ChipWhisperer system. This will introduce you to many required features
-of the ChipWhisperer system when it comes to glitching. This will be
-built on in later tutorials to generate voltage glitching attacks, or
-when you wish to attack other targets.
+Supported setups:
+
+SCOPES:
+
+-  OPENADC
+
+PLATFORMS:
+
+-  CWLITEARM
+-  CWLITEXMEGA
+
+This advanced tutorial will introduce clock glitch attacks using the
+ChipWhisperer system, demonstrating some of its glitching features, as
+well as the importance of glitch attacks. This will be built on in later
+tutorials to attack different types of firmware.
 
 
 **In [1]:**
@@ -177,10 +187,8 @@ Setting Up Firmware
 -------------------
 
 As with previous tutorials, we'll start by creating a new project from
-base firmware, as well as setting up our ``PLATFORM`` and
-``CRYPTO_TARGET``. This tutorial doesn't use any crypto, so we'll leave
-the latter option as ``NONE``. This time, we'll be using
-``glitch-simple``:
+base firmware. This tutorial doesn't use any crypto, so we'll leave the
+latter option as ``NONE``. This time, we'll be using ``glitch-simple``:
 
 Now navigate to the ``glitch-simple-lab1`` folder and open
 ``glitchsimple.c`` in a code editor. Scroll down until you find the
@@ -320,7 +328,7 @@ the ``FUNC_SEL`` makefile variable like so:
     .
     Creating load file for EEPROM: glitchsimple-CWLITEXMEGA.eep
     avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.eep || exit 0
+    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.eep \|\| exit 0
     .
     Creating Extended Listing: glitchsimple-CWLITEXMEGA.lss
     avr-objdump -h -S -z glitchsimple-CWLITEXMEGA.elf > glitchsimple-CWLITEXMEGA.lss
@@ -353,7 +361,7 @@ built in the last step.
 
 .. code:: ipython3
 
-    %run "Helper_Scripts/Setup.ipynb"
+    %run "Helper_Scripts/Setup_Generic.ipynb"
 
 
 **In [4]:**
@@ -383,10 +391,10 @@ built in the last step.
 
 
 Since the firmware enters an infinite loop, we'll need to reset the
-target between glitch attempts. ``"Helper_Scripts/Setup.ipynb"`` defines
-a reset function ``reset_target(scope)`` that we'll use here. Now let's
-make sure the firmware works as we expect. We should get ``"hello\nA"``
-back after resetting the target.
+target between glitch attempts. ``"Helper_Scripts/Setup_Generic.ipynb"``
+defines a reset function ``reset_target(scope)`` that we'll use here.
+Now let's make sure the firmware works as we expect. We should get
+``"hello\nA"`` back after resetting the target.
 
 
 **In [6]:**
@@ -420,7 +428,9 @@ Glitch Module
 
 All the settings/methods for the glitch module can be accessed under
 ``scope.glitch``. As usual, documentation for the settings and methods
-can be accessed by the python ``help`` command:
+can be accessed on
+`ReadtheDocs <https://chipwhisperer.readthedocs.io/en/latest/api.html>`__
+or by the python ``help`` command:
 
 
 **In [7]:**
@@ -439,261 +449,261 @@ can be accessed by the python ``help`` command:
     Help on GlitchSettings in module chipwhisperer.capture.scopes.cwhardware.ChipWhispererGlitch object:
     
     class GlitchSettings(chipwhisperer.common.utils.util.DisableNewAttr)
-     |  GlitchSettings(cwglitch)
-     |  
-     |  Provides an ability to disable setting new attributes in a class, useful to prevent typos.
-     |  
-     |  Usage:
-     |  1. Make a class that inherits this class:
-     |  >>> class MyClass(DisableNewAttr):
-     |  >>>     # Your class definition here
-     |  
-     |  2. After setting up all attributes that your object needs, call disable_newattr():
-     |  >>>     def __init__(self):
-     |  >>>         self.my_attr = 123
-     |  >>>         self.disable_newattr()
-     |  
-     |  3. Subclasses raise an AttributeError when trying to make a new attribute:
-     |  >>> obj = MyClass()
-     |  >>> #obj.my_new_attr = 456   <-- Raises AttributeError
-     |  
-     |  Method resolution order:
-     |      GlitchSettings
-     |      chipwhisperer.common.utils.util.DisableNewAttr
-     |      builtins.object
-     |  
-     |  Methods defined here:
-     |  
-     |  __init__(self, cwglitch)
-     |      Initialize self.  See help(type(self)) for accurate signature.
-     |  
-     |  __repr__(self)
-     |      Return repr(self).
-     |  
-     |  __str__(self)
-     |      Return str(self).
-     |  
-     |  manualTrigger(self)
-     |      Manually trigger the glitch output.
-     |      
-     |      This trigger is most useful in Manual trigger mode, where this is the
-     |      only way to cause a glitch.
-     |  
-     |  readStatus(self)
-     |      Read the status of the two glitch DCMs.
-     |      
-     |      Returns:
-     |          A tuple with 4 elements::
-     |      
-     |           \* phase1: Phase shift of DCM1,
-     |           \* phase2: Phase shift of DCM2,
-     |           \* lock1: Whether DCM1 is locked,
-     |           \* lock2: Whether DCM2 is locked
-     |  
-     |  resetDcms(self)
-     |      Reset the two glitch DCMs.
-     |      
-     |      This is automatically run after changing the glitch width or offset,
-     |      so this function is typically not necessary.
-     |  
-     |  ----------------------------------------------------------------------
-     |  Data descriptors defined here:
-     |  
-     |  arm_timing
-     |      When to arm the glitch in single-shot mode.
-     |      
-     |      If the glitch module is in "ext_single" trigger mode, it must be armed
-     |      when the scope is armed. There are two timings for this event:
-     |      
-     |       \* "before_scope": The glitch module is armed first.
-     |       \* "after_scope": The scope is armed first. This is the default.
-     |      
-     |      This setting may be helpful if trigger events are happening very early.
-     |      
-     |      If the glitch module is not in external trigger single-shot mode, this
-     |      setting has no effect.
-     |      
-     |      :Getter: Return the current arm timing ("before_scope" or "after_scope")
-     |      
-     |      :Setter: Change the arm timing
-     |      
-     |      Raises:
-     |         ValueError: if value not listed above
-     |  
-     |  clk_src
-     |      The clock signal that the glitch DCM is using as input.
-     |      
-     |      This DCM can be clocked from two different sources:
-     |       \* "target": The HS1 clock from the target device
-     |       \* "clkgen": The CLKGEN DCM output
-     |      
-     |      :Getter:
-     |         Return the clock signal currently in use
-     |      
-     |      :Setter:
-     |         Change the glitch clock source
-     |      
-     |      Raises:
-     |         ValueError: New value not one of "target" or "clkgen"
-     |  
-     |  ext_offset
-     |      How long the glitch module waits between a trigger and a glitch.
-     |      
-     |      After the glitch module is triggered, it waits for a number of clock
-     |      cycles before generating glitch pulses. This delay allows the glitch to
-     |      be inserted at a precise moment during the target's execution to glitch
-     |      specific instructions.
-     |      
-     |      .. note::
-     |          It is possible to get more precise offsets by clocking the
-     |          glitch module faster than the target board.
-     |      
-     |      This offset must be in the range [0, 2\*\*32).
-     |      
-     |      :Getter: Return the current external trigger offset.
-     |      
-     |      :Setter: Set the external trigger offset.
-     |      
-     |      Raises:
-     |         TypeError: if offset not an integer
-     |         ValueError: if offset outside of range [0, 2\*\*32)
-     |  
-     |  offset
-     |      The offset from a rising clock edge to a glitch pulse rising edge,
-     |      as a percentage of one period.
-     |      
-     |      A pulse may begin anywhere from -49.8% to 49.8% away from a rising
-     |      edge, allowing glitches to be swept over the entire clock cycle.
-     |      
-     |      :Getter: Return a float with the current glitch offset.
-     |      
-     |      :Setter: Set the glitch offset. The new value is rounded to the nearest
-     |          possible offset.
-     |      
-     |      Raises:
-     |         TypeError: offset not an integer
-     |         UserWarning: value outside range [-50, 50] (value is rounded)
-     |  
-     |  offset_fine
-     |      The fine adjustment value on the glitch offset.
-     |      
-     |      This is a dimensionless number that makes small adjustments to the
-     |      glitch pulses' offset. Valid range is [-255, 255].
-     |      
-     |      :Getter: Return the current glitch fine offset
-     |      
-     |      :Setter: Update the glitch fine offset
-     |      
-     |      Raises:
-     |         TypeError: if offset not an integer
-     |         ValueError: if offset is outside of [-255, 255]
-     |  
-     |  output
-     |      The type of output produced by the glitch module.
-     |      
-     |      There are 5 ways that the glitch module can combine the clock with its
-     |      glitch pulses:
-     |      
-     |       \* "clock_only": Output only the original input clock.
-     |       \* "glitch_only": Output only the glitch pulses - do not use the clock.
-     |       \* "clock_or": Output is high if either the clock or glitch are high.
-     |       \* "clock_xor": Output is high if clock and glitch are different.
-     |       \* "enable_only": Output is high for glitch.repeat cycles.
-     |      
-     |      Some of these settings are only useful in certain scenarios:
-     |       \* Clock glitching: "clock_or" or "clock_xor"
-     |       \* Voltage glitching: "glitch_only" or "enable_only"
-     |      
-     |      :Getter: Return the current glitch output mode (one of above strings)
-     |      
-     |      :Setter: Change the glitch output mode.
-     |      
-     |      Raises:
-     |         ValueError: if value not in above strings
-     |  
-     |  repeat
-     |      The number of glitch pulses to generate per trigger.
-     |      
-     |      When the glitch module is triggered, it produces a number of pulses
-     |      that can be combined with the clock signal. This setting allows for
-     |      the glitch module to produce stronger glitches (especially during
-     |      voltage glitching).
-     |      
-     |      Repeat counter must be in the range [1, 255].
-     |      
-     |      :Getter: Return the current repeat value (integer)
-     |      
-     |      :Setter: Set the repeat counter
-     |      
-     |      Raises:
-     |         TypeError: if value not an integer
-     |         ValueError: if value outside [1, 255]
-     |  
-     |  trigger_src
-     |      The trigger signal for the glitch pulses.
-     |      
-     |      The glitch module can use four different types of triggers:
-     |       \* "continuous": Constantly trigger glitches
-     |       \* "manual": Only trigger glitches through API calls/GUI actions
-     |       \* "ext_single": Use the trigger module. One glitch per scope arm.
-     |       \* "ext_continuous": Use the trigger module. Many glitches per arm.
-     |      
-     |      :Getter: Return the current trigger source.
-     |      
-     |      :Setter: Change the trigger source.
-     |      
-     |      Raises:
-     |         ValueError: value not listed above.
-     |  
-     |  width
-     |      The width of a single glitch pulse, as a percentage of one period.
-     |      
-     |      One pulse can range from -49.8% to roughly 49.8% of a period. The
-     |      system may not be reliable at 0%. Note that negative widths are allowed;
-     |      these act as if they are positive widths on the other half of the
-     |      clock cycle.
-     |      
-     |      :Getter: Return a float with the current glitch width.
-     |      
-     |      :Setter: Update the glitch pulse width. The value will be adjusted to
-     |          the closest possible glitch width.
-     |      
-     |      Raises:
-     |         UserWarning: Width outside of [-49.8, 49.8]. The value is rounded
-     |             to one of these
-     |  
-     |  width_fine
-     |      The fine adjustment value on the glitch width.
-     |      
-     |      This is a dimensionless number that makes small adjustments to the
-     |      glitch pulses' width. Valid range is [-255, 255].
-     |      
-     |      :Getter: Return the current glitch fine width
-     |      
-     |      :Setter: Update the glitch fine width
-     |      
-     |      Raises:
-     |         TypeError: offset not an integer
-     |         ValueError: offset is outside of [-255, 255]
-     |  
-     |  ----------------------------------------------------------------------
-     |  Methods inherited from chipwhisperer.common.utils.util.DisableNewAttr:
-     |  
-     |  __setattr__(self, name, value)
-     |      Implement setattr(self, name, value).
-     |  
-     |  disable_newattr(self)
-     |  
-     |  enable_newattr(self)
-     |  
-     |  ----------------------------------------------------------------------
-     |  Data descriptors inherited from chipwhisperer.common.utils.util.DisableNewAttr:
-     |  
-     |  __dict__
-     |      dictionary for instance variables (if defined)
-     |  
-     |  __weakref__
-     |      list of weak references to the object (if defined)
+     \|  GlitchSettings(cwglitch)
+     \|  
+     \|  Provides an ability to disable setting new attributes in a class, useful to prevent typos.
+     \|  
+     \|  Usage:
+     \|  1. Make a class that inherits this class:
+     \|  >>> class MyClass(DisableNewAttr):
+     \|  >>>     # Your class definition here
+     \|  
+     \|  2. After setting up all attributes that your object needs, call disable_newattr():
+     \|  >>>     def __init__(self):
+     \|  >>>         self.my_attr = 123
+     \|  >>>         self.disable_newattr()
+     \|  
+     \|  3. Subclasses raise an AttributeError when trying to make a new attribute:
+     \|  >>> obj = MyClass()
+     \|  >>> #obj.my_new_attr = 456   <-- Raises AttributeError
+     \|  
+     \|  Method resolution order:
+     \|      GlitchSettings
+     \|      chipwhisperer.common.utils.util.DisableNewAttr
+     \|      builtins.object
+     \|  
+     \|  Methods defined here:
+     \|  
+     \|  __init__(self, cwglitch)
+     \|      Initialize self.  See help(type(self)) for accurate signature.
+     \|  
+     \|  __repr__(self)
+     \|      Return repr(self).
+     \|  
+     \|  __str__(self)
+     \|      Return str(self).
+     \|  
+     \|  manualTrigger(self)
+     \|      Manually trigger the glitch output.
+     \|      
+     \|      This trigger is most useful in Manual trigger mode, where this is the
+     \|      only way to cause a glitch.
+     \|  
+     \|  readStatus(self)
+     \|      Read the status of the two glitch DCMs.
+     \|      
+     \|      Returns:
+     \|          A tuple with 4 elements::
+     \|      
+     \|           \* phase1: Phase shift of DCM1,
+     \|           \* phase2: Phase shift of DCM2,
+     \|           \* lock1: Whether DCM1 is locked,
+     \|           \* lock2: Whether DCM2 is locked
+     \|  
+     \|  resetDcms(self)
+     \|      Reset the two glitch DCMs.
+     \|      
+     \|      This is automatically run after changing the glitch width or offset,
+     \|      so this function is typically not necessary.
+     \|  
+     \|  ----------------------------------------------------------------------
+     \|  Data descriptors defined here:
+     \|  
+     \|  arm_timing
+     \|      When to arm the glitch in single-shot mode.
+     \|      
+     \|      If the glitch module is in "ext_single" trigger mode, it must be armed
+     \|      when the scope is armed. There are two timings for this event:
+     \|      
+     \|       \* "before_scope": The glitch module is armed first.
+     \|       \* "after_scope": The scope is armed first. This is the default.
+     \|      
+     \|      This setting may be helpful if trigger events are happening very early.
+     \|      
+     \|      If the glitch module is not in external trigger single-shot mode, this
+     \|      setting has no effect.
+     \|      
+     \|      :Getter: Return the current arm timing ("before_scope" or "after_scope")
+     \|      
+     \|      :Setter: Change the arm timing
+     \|      
+     \|      Raises:
+     \|         ValueError: if value not listed above
+     \|  
+     \|  clk_src
+     \|      The clock signal that the glitch DCM is using as input.
+     \|      
+     \|      This DCM can be clocked from two different sources:
+     \|       \* "target": The HS1 clock from the target device
+     \|       \* "clkgen": The CLKGEN DCM output
+     \|      
+     \|      :Getter:
+     \|         Return the clock signal currently in use
+     \|      
+     \|      :Setter:
+     \|         Change the glitch clock source
+     \|      
+     \|      Raises:
+     \|         ValueError: New value not one of "target" or "clkgen"
+     \|  
+     \|  ext_offset
+     \|      How long the glitch module waits between a trigger and a glitch.
+     \|      
+     \|      After the glitch module is triggered, it waits for a number of clock
+     \|      cycles before generating glitch pulses. This delay allows the glitch to
+     \|      be inserted at a precise moment during the target's execution to glitch
+     \|      specific instructions.
+     \|      
+     \|      .. note::
+     \|          It is possible to get more precise offsets by clocking the
+     \|          glitch module faster than the target board.
+     \|      
+     \|      This offset must be in the range [0, 2\*\*32).
+     \|      
+     \|      :Getter: Return the current external trigger offset.
+     \|      
+     \|      :Setter: Set the external trigger offset.
+     \|      
+     \|      Raises:
+     \|         TypeError: if offset not an integer
+     \|         ValueError: if offset outside of range [0, 2\*\*32)
+     \|  
+     \|  offset
+     \|      The offset from a rising clock edge to a glitch pulse rising edge,
+     \|      as a percentage of one period.
+     \|      
+     \|      A pulse may begin anywhere from -49.8% to 49.8% away from a rising
+     \|      edge, allowing glitches to be swept over the entire clock cycle.
+     \|      
+     \|      :Getter: Return a float with the current glitch offset.
+     \|      
+     \|      :Setter: Set the glitch offset. The new value is rounded to the nearest
+     \|          possible offset.
+     \|      
+     \|      Raises:
+     \|         TypeError: offset not an integer
+     \|         UserWarning: value outside range [-50, 50] (value is rounded)
+     \|  
+     \|  offset_fine
+     \|      The fine adjustment value on the glitch offset.
+     \|      
+     \|      This is a dimensionless number that makes small adjustments to the
+     \|      glitch pulses' offset. Valid range is [-255, 255].
+     \|      
+     \|      :Getter: Return the current glitch fine offset
+     \|      
+     \|      :Setter: Update the glitch fine offset
+     \|      
+     \|      Raises:
+     \|         TypeError: if offset not an integer
+     \|         ValueError: if offset is outside of [-255, 255]
+     \|  
+     \|  output
+     \|      The type of output produced by the glitch module.
+     \|      
+     \|      There are 5 ways that the glitch module can combine the clock with its
+     \|      glitch pulses:
+     \|      
+     \|       \* "clock_only": Output only the original input clock.
+     \|       \* "glitch_only": Output only the glitch pulses - do not use the clock.
+     \|       \* "clock_or": Output is high if either the clock or glitch are high.
+     \|       \* "clock_xor": Output is high if clock and glitch are different.
+     \|       \* "enable_only": Output is high for glitch.repeat cycles.
+     \|      
+     \|      Some of these settings are only useful in certain scenarios:
+     \|       \* Clock glitching: "clock_or" or "clock_xor"
+     \|       \* Voltage glitching: "glitch_only" or "enable_only"
+     \|      
+     \|      :Getter: Return the current glitch output mode (one of above strings)
+     \|      
+     \|      :Setter: Change the glitch output mode.
+     \|      
+     \|      Raises:
+     \|         ValueError: if value not in above strings
+     \|  
+     \|  repeat
+     \|      The number of glitch pulses to generate per trigger.
+     \|      
+     \|      When the glitch module is triggered, it produces a number of pulses
+     \|      that can be combined with the clock signal. This setting allows for
+     \|      the glitch module to produce stronger glitches (especially during
+     \|      voltage glitching).
+     \|      
+     \|      Repeat counter must be in the range [1, 255].
+     \|      
+     \|      :Getter: Return the current repeat value (integer)
+     \|      
+     \|      :Setter: Set the repeat counter
+     \|      
+     \|      Raises:
+     \|         TypeError: if value not an integer
+     \|         ValueError: if value outside [1, 255]
+     \|  
+     \|  trigger_src
+     \|      The trigger signal for the glitch pulses.
+     \|      
+     \|      The glitch module can use four different types of triggers:
+     \|       \* "continuous": Constantly trigger glitches
+     \|       \* "manual": Only trigger glitches through API calls/GUI actions
+     \|       \* "ext_single": Use the trigger module. One glitch per scope arm.
+     \|       \* "ext_continuous": Use the trigger module. Many glitches per arm.
+     \|      
+     \|      :Getter: Return the current trigger source.
+     \|      
+     \|      :Setter: Change the trigger source.
+     \|      
+     \|      Raises:
+     \|         ValueError: value not listed above.
+     \|  
+     \|  width
+     \|      The width of a single glitch pulse, as a percentage of one period.
+     \|      
+     \|      One pulse can range from -49.8% to roughly 49.8% of a period. The
+     \|      system may not be reliable at 0%. Note that negative widths are allowed;
+     \|      these act as if they are positive widths on the other half of the
+     \|      clock cycle.
+     \|      
+     \|      :Getter: Return a float with the current glitch width.
+     \|      
+     \|      :Setter: Update the glitch pulse width. The value will be adjusted to
+     \|          the closest possible glitch width.
+     \|      
+     \|      Raises:
+     \|         UserWarning: Width outside of [-49.8, 49.8]. The value is rounded
+     \|             to one of these
+     \|  
+     \|  width_fine
+     \|      The fine adjustment value on the glitch width.
+     \|      
+     \|      This is a dimensionless number that makes small adjustments to the
+     \|      glitch pulses' width. Valid range is [-255, 255].
+     \|      
+     \|      :Getter: Return the current glitch fine width
+     \|      
+     \|      :Setter: Update the glitch fine width
+     \|      
+     \|      Raises:
+     \|         TypeError: offset not an integer
+     \|         ValueError: offset is outside of [-255, 255]
+     \|  
+     \|  ----------------------------------------------------------------------
+     \|  Methods inherited from chipwhisperer.common.utils.util.DisableNewAttr:
+     \|  
+     \|  __setattr__(self, name, value)
+     \|      Implement setattr(self, name, value).
+     \|  
+     \|  disable_newattr(self)
+     \|  
+     \|  enable_newattr(self)
+     \|  
+     \|  ----------------------------------------------------------------------
+     \|  Data descriptors inherited from chipwhisperer.common.utils.util.DisableNewAttr:
+     \|  
+     \|  __dict__
+     \|      dictionary for instance variables (if defined)
+     \|  
+     \|  __weakref__
+     \|      list of weak references to the object (if defined)
     
     
 
@@ -759,9 +769,9 @@ looping through parameters simpler.
 
     clk_src     = clkgen
     width       = 10.15625
-    width_fine  = 1
+    width_fine  = 0
     offset      = 10.15625
-    offset_fine = 1
+    offset_fine = 0
     trigger_src = ext_single
     arm_timing  = after_scope
     ext_offset  = 0
@@ -1043,12 +1053,6 @@ these improvements, our loop looks like:
 
 
 
-.. parsed-literal::
-
-    WARNING:root:SAM3U Serial buffers OVERRUN - data loss has occurred.
-    
-
-
 
 
 
@@ -1298,9 +1302,11 @@ to successful glitches:
 
 .. parsed-literal::
 
-    [-5.46875, -1.953125, 0.2, "'\\x00hello\\n\\x81'"]
-    [-3.125, -3.125, 0.2, "'\\x00hello\\n\\xa0'"]
-    [3.90625, -6.640625, 0.2, "'\\x00hello\\nAhello\\nA'"]
+    [-10.15625, -1.953125, 0.2, "'\\x00hello\\nA'"]
+    [-8.984375, -1.953125, 0.4, "'\\x00hello\\nA1234'"]
+    [-6.640625, -1.953125, 0.2, "'\\x00hello\\nA'"]
+    [-3.125, -10.15625, 0.2, "'\\x00hello\\n\\xa0'"]
+    [-3.125, -6.640625, 0.2, "'\\x00hello\\n\\xa0'"]
     
 
 
@@ -1438,7 +1444,7 @@ new firmware, using ``FUNC_SEL`` to build with ``glitch3()``.
     .
     Creating load file for EEPROM: glitchsimple-CWLITEXMEGA.eep
     avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.eep || exit 0
+    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex glitchsimple-CWLITEXMEGA.elf glitchsimple-CWLITEXMEGA.eep \|\| exit 0
     .
     Creating Extended Listing: glitchsimple-CWLITEXMEGA.lss
     avr-objdump -h -S -z glitchsimple-CWLITEXMEGA.elf > glitchsimple-CWLITEXMEGA.lss
@@ -2442,24 +2448,6 @@ Attack Loop
 .. parsed-literal::
 
     WARNING:root:Timeout in OpenADC capture(), trigger FORCED
-    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
-    
-
-
-
-
-.. parsed-literal::
-
-    Timeout happened during acquisition
-    
-
-
-
-
-.. parsed-literal::
-
-    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
-    WARNING:root:Timeout in OpenADC capture(), trigger FORCED
     
 
 
@@ -2796,7 +2784,9 @@ Attack Loop
 .. parsed-literal::
 
     8
-    [0.390625, 2.734375, 1, True, "'Welcome\\nPassword:'"]
+    [-4.296875, 1.5625, 6, True, "'Welcome\\nPassword:'"]
+    [-4.296875, 1.5625, 16, True, "'Welcome\\nPassword:'"]
+    [-4.296875, 5.078125, 1, True, "'Welcome\\nPassword:'"]
     
 
 
@@ -2823,17 +2813,11 @@ powerful tool for bypassing authentication in embedded hardware devices.
 There are many ways to expand your knowledge with additional practice,
 such as:
 
--  Manual glitches can be triggered by calling
-   ``scope.glitch.manualTrigger()`` and
-   ``scope.glitch.trigger_src = "manual"``. Try using manual glitches to
-   simply glitch past the prompt in ``glitch3()``.
 -  Completing the VCC Glitch Attacks tutorial (not yet available), which
    introduces glitching via voltage instead of the clock.
 -  Download some example source code (bootloaders, login prompts, etc)
    and port them to your target. See how you can glitch past security
    checks.
--  Use one of the IO triggers discussed in
-   Tutorial\_A1\_Synchronization\_to\_Communication\_Lines.
 
 Tests
 -----

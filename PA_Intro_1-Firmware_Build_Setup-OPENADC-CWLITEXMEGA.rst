@@ -2,53 +2,31 @@
 Firmware Build Setup
 ====================
 
-This tutorial will introduce you to the 'simpleserial' communications
-system. It will show you how to perform different operations on data
-based on input from the ChipWhisperer software. This can be used for
-building your own system which you wish to 'break'. All the ``%%bash``
-blocks can be run either in Jupyter or in your favourite command line
-environment (note that Jupyter resets your path between blocks).
+Supported setups:
 
-Additionally, there is a block below that has ``#Parameters`` at the
-top. This is a block used to configure tutorials for different targets
-and situations. Make sure you change these parameters in this and future
-tutorials so that they match your hardware setup. Important parameters
-include:
+SCOPES:
 
--  ``SCOPETYPE`` - Capture hardware to use, for example "OPENADC" for
-   CWLite or CWPro.
--  ``PLATFORM`` - Target being attacked. For example, "CW308\_STM32F3"
-   for STM32F3 on CW308 board.
--  ``CRYPTO_TARGET`` - Cryptography library used for encryption
-   functions. For example, "TINYAES128C".
+-  OPENADC
+-  CWNANO
 
-Some common hardware configurations are (``CRYPTO_TARGET`` is unused in
-this tutorial, but will be used in later tutorials involving AES and
-RSA):
+PLATFORMS:
 
-CWLite 1-part w/ Arm target:
+-  CWLITEARM
+-  CWLITEXMEGA
+-  CWNANO
 
-.. code:: python
+This tutorial will introduce you to the software side of ChipWhisperer,
+including the tutorials themselves. It will also show you how to perform
+different operations on data based on input from the ChipWhisperer
+software. This can be used for building your own system which you wish
+to 'break'. All the ``%%bash`` blocks can be run either in Jupyter or in
+your favourite command line environment (note that Jupyter resets your
+path between blocks).
 
-    SCOPETYPE = 'OPENADC'
-    PLATFORM = 'CWLITEARM'
-    CRYPTO_TARGET = 'TINYAES128C'
+If you haven't run through ``!!Introduction_to_Jupyter!!.ipynb`` do that
+now.
 
-CWLite 1-part w/ Xmega target
-
-.. code:: python
-
-    SCOPETYPE = 'OPENADC'
-    PLATFORM = 'CWLITEXMEGA'
-    CRYPTO_TARGET = 'AVRCRYPTOLIB'
-
-CWNano 1-part
-
-.. code:: python
-
-    SCOPETYPE = 'CWNANO'
-    PLATFORM = 'CWNANO'
-    CRYPTO_TARGET = 'TINYAES128C'
+Assuming you've done that, we can get started on the tutorial.
 
 
 **In [1]:**
@@ -67,8 +45,8 @@ be easily implemented on most systems. This system communicates using a
 standard asyncronous serial protocol, 38400 baud, 8-N-1.
 
 All messages are sent in ASCII-text, and are normally terminated with a
-line-feed (':raw-latex:`\n`'). This allows you to interact with the
-simpleserial system over a standard terminal emulator.
+line-feed (``'\n'``). This allows you to interact with the simpleserial
+system over a standard terminal emulator.
 
 ``x``
 
@@ -203,6 +181,8 @@ successfully run the block below.
     rm -f -- simpleserial-base.s simpleserial.s XMEGA_AES_driver.s uart.s usart_driver.s xmega_hal.s
     rm -f -- simpleserial-base.d simpleserial.d XMEGA_AES_driver.d uart.d usart_driver.d xmega_hal.d
     rm -f -- simpleserial-base.i simpleserial.i XMEGA_AES_driver.i uart.i usart_driver.i xmega_hal.i
+    mkdir objdir 
+    mkdir .dep
     .
     -------- begin --------
     avr-gcc (WinAVR 20100110) 4.3.3
@@ -237,7 +217,7 @@ successfully run the block below.
     .
     Creating load file for EEPROM: simpleserial-base-CWLITEXMEGA.eep
     avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.eep || exit 0
+    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.eep \|\| exit 0
     .
     Creating Extended Listing: simpleserial-base-CWLITEXMEGA.lss
     avr-objdump -h -S -z simpleserial-base-CWLITEXMEGA.elf > simpleserial-base-CWLITEXMEGA.lss
@@ -365,7 +345,7 @@ Then rebuild the file with ``make``:
     .
     Creating load file for EEPROM: simpleserial-base-CWLITEXMEGA.eep
     avr-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.eep || exit 0
+    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWLITEXMEGA.elf simpleserial-base-CWLITEXMEGA.eep \|\| exit 0
     .
     Creating Extended Listing: simpleserial-base-CWLITEXMEGA.lss
     avr-objdump -h -S -z simpleserial-base-CWLITEXMEGA.elf > simpleserial-base-CWLITEXMEGA.lss
@@ -405,8 +385,9 @@ looking at in later tutorials.
 
     import chipwhisperer as cw
 
-Documentation is available by calling ``help()`` on the module,
-submodules, functions, etc.:
+Documentation is available on
+`ReadtheDocs <https://chipwhisperer.readthedocs.io/en/latest/api.html>`__
+or by calling ``help()`` on the module, submodule, function, etc.:
 
 
 **In [8]:**
@@ -650,147 +631,153 @@ can still specify the scope type.
     Help on OpenADC in module chipwhisperer.capture.scopes.OpenADC object:
     
     class OpenADC(chipwhisperer.capture.scopes.base.ScopeTemplate, chipwhisperer.common.utils.util.DisableNewAttr)
-     |  OpenADC scope object.
-     |  
-     |  This class contains the public API for the OpenADC hardware, including the
-     |  ChipWhisperer Lite/ CW1200 Pro boards. It includes specific settings for
-     |  each of these devices.
-     |  
-     |  To connect to one of these devices, the easiest method is::
-     |  
-     |      import chipwhisperer as cw
-     |      scope = cw.scope(type=scopes.OpenADC)
-     |  
-     |  Some sane default settings are available via::
-     |  
-     |      scope.default_setup()
-     |  
-     |  This code will automatically detect an attached ChipWhisperer device and
-     |  connect to it.
-     |  
-     |  For more help about scope settings, try help() on each of the ChipWhisperer
-     |  scope submodules (scope.gain, scope.adc, scope.clock, scope.io,
-     |  scope.trigger, and scope.glitch):
-     |  
-     |   \*  :attr:`scope.gain <.OpenADC.gain>`
-     |   \*  :attr:`scope.adc <.OpenADC.adc>`
-     |   \*  :attr:`scope.clock <.OpenADC.clock>`
-     |   \*  :attr:`scope.io <.OpenADC.io>`
-     |   \*  :attr:`scope.trigger <.OpenADC.trigger>`
-     |   \*  :attr:`scope.glitch <.OpenADC.glitch>`
-     |   \*  :meth:`scope.default_setup <.OpenADC.default_setup>`
-     |   \*  :meth:`scope.con <.OpenADC.con>`
-     |   \*  :meth:`scope.dis <.OpenADC.dis>`
-     |   \*  :meth:`scope.arm <.OpenADC.arm>`
-     |   \*  :meth:`scope.get_last_trace <.OpenADC.get_last_trace>`
-     |  
-     |  Method resolution order:
-     |      OpenADC
-     |      chipwhisperer.capture.scopes.base.ScopeTemplate
-     |      chipwhisperer.common.utils.util.DisableNewAttr
-     |      builtins.object
-     |  
-     |  Methods defined here:
-     |  
-     |  __init__(self)
-     |      Initialize self.  See help(type(self)) for accurate signature.
-     |  
-     |  __repr__(self)
-     |      Return repr(self).
-     |  
-     |  __str__(self)
-     |      Return str(self).
-     |  
-     |  arm(self)
-     |      Setup scope to begin capture/glitching when triggered.
-     |      
-     |      The scope must be armed before capture or glitching (when set to
-     |      'ext_single') can begin.
-     |      
-     |      Raises:
-     |         OSError: Scope isn't connected.
-     |         Exception: Error when arming. This method catches these and
-     |             disconnects before reraising them.
-     |  
-     |  capture(self)
-     |      Captures trace. Scope must be armed before capturing.
-     |      
-     |      Returns:
-     |         True if capture timed out, false if it didn't.
-     |      
-     |      Raises:
-     |         IOError: Unknown failure.
-     |  
-     |  dcmTimeout(self)
-     |  
-     |  default_setup(self)
-     |      Sets up sane capture defaults for this scope
-     |      
-     |       \*  45dB gain
-     |       \*  5000 capture samples
-     |       \*  0 sample offset
-     |       \*  rising edge trigger
-     |       \*  7.37MHz clock output on hs2
-     |       \*  4\*7.37MHz ADC clock
-     |       \*  tio1 = serial rx
-     |       \*  tio2 = serial tx
-     |      
-     |      .. versionadded:: 5.1
-     |          Added default setup for OpenADC
-     |  
-     |  getCurrentScope(self)
-     |  
-     |  getLastTrace(self)
-     |      Deprecated: Use get_last_trace instead.
-     |  
-     |  get_last_trace(self)
-     |      Return the last trace captured with this scope.
-     |      
-     |      Returns:
-     |         Numpy array of the last capture trace.
-     |  
-     |  get_name(self)
-     |      Gets the name of the attached scope
-     |      
-     |      Returns:
-     |          'ChipWhisperer Lite' if a Lite, 'ChipWhisperer Pro' if a Pro
-     |  
-     |  setCurrentScope(self, scope)
-     |  
-     |  ----------------------------------------------------------------------
-     |  Methods inherited from chipwhisperer.capture.scopes.base.ScopeTemplate:
-     |  
-     |  con(self, sn=None)
-     |  
-     |  dis(self)
-     |  
-     |  getName(self)
-     |      Deprecated: Use get_name instead.
-     |  
-     |  getStatus(self)
-     |  
-     |  newDataReceived(self, channelNum, data=None, offset=0, sampleRate=0)
-     |  
-     |  setAutorefreshDCM(self, enabled)
-     |  
-     |  ----------------------------------------------------------------------
-     |  Data descriptors inherited from chipwhisperer.capture.scopes.base.ScopeTemplate:
-     |  
-     |  __dict__
-     |      dictionary for instance variables (if defined)
-     |  
-     |  __weakref__
-     |      list of weak references to the object (if defined)
-     |  
-     |  ----------------------------------------------------------------------
-     |  Methods inherited from chipwhisperer.common.utils.util.DisableNewAttr:
-     |  
-     |  __setattr__(self, name, value)
-     |      Implement setattr(self, name, value).
-     |  
-     |  disable_newattr(self)
-     |  
-     |  enable_newattr(self)
+     \|  OpenADC scope object.
+     \|  
+     \|  This class contains the public API for the OpenADC hardware, including the
+     \|  ChipWhisperer Lite/ CW1200 Pro boards. It includes specific settings for
+     \|  each of these devices.
+     \|  
+     \|  To connect to one of these devices, the easiest method is::
+     \|  
+     \|      import chipwhisperer as cw
+     \|      scope = cw.scope(type=scopes.OpenADC)
+     \|  
+     \|  Some sane default settings are available via::
+     \|  
+     \|      scope.default_setup()
+     \|  
+     \|  This code will automatically detect an attached ChipWhisperer device and
+     \|  connect to it.
+     \|  
+     \|  For more help about scope settings, try help() on each of the ChipWhisperer
+     \|  scope submodules (scope.gain, scope.adc, scope.clock, scope.io,
+     \|  scope.trigger, and scope.glitch):
+     \|  
+     \|   \*  :attr:`scope.gain <.OpenADC.gain>`
+     \|   \*  :attr:`scope.adc <.OpenADC.adc>`
+     \|   \*  :attr:`scope.clock <.OpenADC.clock>`
+     \|   \*  :attr:`scope.io <.OpenADC.io>`
+     \|   \*  :attr:`scope.trigger <.OpenADC.trigger>`
+     \|   \*  :attr:`scope.glitch <.OpenADC.glitch>`
+     \|   \*  :meth:`scope.default_setup <.OpenADC.default_setup>`
+     \|   \*  :meth:`scope.con <.OpenADC.con>`
+     \|   \*  :meth:`scope.dis <.OpenADC.dis>`
+     \|   \*  :meth:`scope.arm <.OpenADC.arm>`
+     \|   \*  :meth:`scope.get_last_trace <.OpenADC.get_last_trace>`
+     \|  
+     \|  If you have a CW1200 ChipWhisperer Pro, you have access to some additional features:
+     \|  
+     \|   \* :attr:`scope.SAD <.OpenADC.SAD>`
+     \|   \* :attr:`scope.DecodeIO <.OpenADC.DecodeIO>`
+     \|   \* :attr:`scope.adc.stream_mode (see scope.adc for more information)`
+     \|  
+     \|  Method resolution order:
+     \|      OpenADC
+     \|      chipwhisperer.capture.scopes.base.ScopeTemplate
+     \|      chipwhisperer.common.utils.util.DisableNewAttr
+     \|      builtins.object
+     \|  
+     \|  Methods defined here:
+     \|  
+     \|  __init__(self)
+     \|      Initialize self.  See help(type(self)) for accurate signature.
+     \|  
+     \|  __repr__(self)
+     \|      Return repr(self).
+     \|  
+     \|  __str__(self)
+     \|      Return str(self).
+     \|  
+     \|  arm(self)
+     \|      Setup scope to begin capture/glitching when triggered.
+     \|      
+     \|      The scope must be armed before capture or glitching (when set to
+     \|      'ext_single') can begin.
+     \|      
+     \|      Raises:
+     \|         OSError: Scope isn't connected.
+     \|         Exception: Error when arming. This method catches these and
+     \|             disconnects before reraising them.
+     \|  
+     \|  capture(self)
+     \|      Captures trace. Scope must be armed before capturing.
+     \|      
+     \|      Returns:
+     \|         True if capture timed out, false if it didn't.
+     \|      
+     \|      Raises:
+     \|         IOError: Unknown failure.
+     \|  
+     \|  dcmTimeout(self)
+     \|  
+     \|  default_setup(self)
+     \|      Sets up sane capture defaults for this scope
+     \|      
+     \|       \*  45dB gain
+     \|       \*  5000 capture samples
+     \|       \*  0 sample offset
+     \|       \*  rising edge trigger
+     \|       \*  7.37MHz clock output on hs2
+     \|       \*  4\*7.37MHz ADC clock
+     \|       \*  tio1 = serial rx
+     \|       \*  tio2 = serial tx
+     \|      
+     \|      .. versionadded:: 5.1
+     \|          Added default setup for OpenADC
+     \|  
+     \|  getCurrentScope(self)
+     \|  
+     \|  getLastTrace(self)
+     \|      Deprecated: Use get_last_trace instead.
+     \|  
+     \|  get_last_trace(self)
+     \|      Return the last trace captured with this scope.
+     \|      
+     \|      Returns:
+     \|         Numpy array of the last capture trace.
+     \|  
+     \|  get_name(self)
+     \|      Gets the name of the attached scope
+     \|      
+     \|      Returns:
+     \|          'ChipWhisperer Lite' if a Lite, 'ChipWhisperer Pro' if a Pro
+     \|  
+     \|  setCurrentScope(self, scope)
+     \|  
+     \|  ----------------------------------------------------------------------
+     \|  Methods inherited from chipwhisperer.capture.scopes.base.ScopeTemplate:
+     \|  
+     \|  con(self, sn=None)
+     \|  
+     \|  dis(self)
+     \|  
+     \|  getName(self)
+     \|      Deprecated: Use get_name instead.
+     \|  
+     \|  getStatus(self)
+     \|  
+     \|  newDataReceived(self, channelNum, data=None, offset=0, sampleRate=0)
+     \|  
+     \|  setAutorefreshDCM(self, enabled)
+     \|  
+     \|  ----------------------------------------------------------------------
+     \|  Data descriptors inherited from chipwhisperer.capture.scopes.base.ScopeTemplate:
+     \|  
+     \|  __dict__
+     \|      dictionary for instance variables (if defined)
+     \|  
+     \|  __weakref__
+     \|      list of weak references to the object (if defined)
+     \|  
+     \|  ----------------------------------------------------------------------
+     \|  Methods inherited from chipwhisperer.common.utils.util.DisableNewAttr:
+     \|  
+     \|  __setattr__(self, name, value)
+     \|      Implement setattr(self, name, value).
+     \|  
+     \|  disable_newattr(self)
+     \|  
+     \|  enable_newattr(self)
     
     
 
@@ -850,7 +837,7 @@ Or, more simply:
 
 Now that the clock and IO lines are setup, we can program the target.
 ChipWhisperer includes a generic programming function,
-``cw.programTarget(scope, type, fw_path)``. Here ``type`` is one of the
+``cw.program_target(scope, type, fw_path)``. Here ``type`` is one of the
 programmers available in the cw.programmers submodule
 (``help(cw.programmers)`` for more information). ``fw_path`` is the path
 to the hex file that you want to flash onto the device.
@@ -928,8 +915,8 @@ the received text below it.
 
 .. parsed-literal::
 
-    b'0a08d9a008fe6cb2c4410142cd5a99ad'
-    b'0a08d9a008fe6cb2c4410142cd5a99ad'
+    b'df27bb88a9d3873efbb88cfc688aefa7'
+    b'df27bb88a9d3873efbb88cfc688aefa7'
     
 
 
@@ -953,8 +940,8 @@ You can also just run:
 
 .. parsed-literal::
 
-    b'0a08d9a008fe6cb2c4410142cd5a99ad'
-    b'0a08d9a008fe6cb2c4410142cd5a99ad'
+    b'df27bb88a9d3873efbb88cfc688aefa7'
+    b'df27bb88a9d3873efbb88cfc688aefa7'
     
 
 
@@ -982,4 +969,4 @@ like to see exactly what they're doing, they're all included in the
 ``Helper_Scripts`` folder.
 
 For example, the scope setup (gain, clock, etc) is taken care of by
-``Helper Scripts/Setup_Target_Generic.ipynb``.
+``Helper Scripts/Setup_Generic.ipynb``.
