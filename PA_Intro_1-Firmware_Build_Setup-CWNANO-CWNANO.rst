@@ -2,53 +2,31 @@
 Firmware Build Setup
 ====================
 
-This tutorial will introduce you to the 'simpleserial' communications
-system. It will show you how to perform different operations on data
-based on input from the ChipWhisperer software. This can be used for
-building your own system which you wish to 'break'. All the ``%%bash``
-blocks can be run either in Jupyter or in your favourite command line
-environment (note that Jupyter resets your path between blocks).
+Supported setups:
 
-Additionally, there is a block below that has ``#Parameters`` at the
-top. This is a block used to configure tutorials for different targets
-and situations. Make sure you change these parameters in this and future
-tutorials so that they match your hardware setup. Important parameters
-include:
+SCOPES:
 
--  ``SCOPETYPE`` - Capture hardware to use, for example "OPENADC" for
-   CWLite or CWPro.
--  ``PLATFORM`` - Target being attacked. For example, "CW308\_STM32F3"
-   for STM32F3 on CW308 board.
--  ``CRYPTO_TARGET`` - Cryptography library used for encryption
-   functions. For example, "TINYAES128C".
+-  OPENADC
+-  CWNANO
 
-Some common hardware configurations are (``CRYPTO_TARGET`` is unused in
-this tutorial, but will be used in later tutorials involving AES and
-RSA):
+PLATFORMS:
 
-CWLite 1-part w/ Arm target:
+-  CWLITEARM
+-  CWLITEXMEGA
+-  CWNANO
 
-.. code:: python
+This tutorial will introduce you to the software side of ChipWhisperer,
+including the tutorials themselves. It will also show you how to perform
+different operations on data based on input from the ChipWhisperer
+software. This can be used for building your own system which you wish
+to 'break'. All the ``%%bash`` blocks can be run either in Jupyter or in
+your favourite command line environment (note that Jupyter resets your
+path between blocks).
 
-    SCOPETYPE = 'OPENADC'
-    PLATFORM = 'CWLITEARM'
-    CRYPTO_TARGET = 'TINYAES128C'
+If you haven't run through ``!!Introduction_to_Jupyter!!.ipynb`` do that
+now.
 
-CWLite 1-part w/ Xmega target
-
-.. code:: python
-
-    SCOPETYPE = 'OPENADC'
-    PLATFORM = 'CWLITEXMEGA'
-    CRYPTO_TARGET = 'AVRCRYPTOLIB'
-
-CWNano 1-part
-
-.. code:: python
-
-    SCOPETYPE = 'CWNANO'
-    PLATFORM = 'CWNANO'
-    CRYPTO_TARGET = 'TINYAES128C'
+Assuming you've done that, we can get started on the tutorial.
 
 
 **In [1]:**
@@ -67,28 +45,33 @@ be easily implemented on most systems. This system communicates using a
 standard asyncronous serial protocol, 38400 baud, 8-N-1.
 
 All messages are sent in ASCII-text, and are normally terminated with a
-line-feed (':raw-latex:`\n`'). This allows you to interact with the
-simpleserial system over a standard terminal emulator.
+line-feed (``'\n'``). This allows you to interact with the simpleserial
+system over a standard terminal emulator.
 
-``x`` >Sending a 'x' resets the buffers. This does not require a
-line-feed termination. It is suggested to always send a stream of x's to
-initilize the system in case the device was already in some other mode
-due to noise/corruption.
+``x``
 
-``k00112233445566778899AABBCCDDEEFF\n`` >Loads the encryption key
-``00112233445566778899AABBCCDDEEFF`` into the system. If not called the
-system may use some default key.
+    Sending a 'x' resets the buffers. This does not require a line-feed
+    termination. It is suggested to always send a stream of x's to
+    initilize the system in case the device was already in some other
+    mode due to noise/corruption.
 
-``pAABBCCDDEEFF00112233445566778899\n`` >Encrypts the data
-``AABBCCDDEEFF00112233445566778899`` with the key loaded with the 'k'
-command. The system will respond with a string starting with r, as shown
-next.
+``k00112233445566778899AABBCCDDEEFF\n``
 
-``rCBBD4A2B34F2571758FF6A797E09859D\n`` >This is the response from the
-system. If data has been encrypted with a 'p' for example, the system
-will respond with the 'r' sequence automatically. So sending the earlier
-example means the result of the encryption was
-``cbbd4a2b34f2571758ff6a797e09859d``.
+    Loads the encryption key ``00112233445566778899AABBCCDDEEFF`` into
+    the system. If not called the system may use some default key.
+
+``pAABBCCDDEEFF00112233445566778899\n``
+
+    Encrypts the data ``AABBCCDDEEFF00112233445566778899`` with the key
+    loaded with the 'k' command. The system will respond with a string
+    starting with r, as shown next.
+
+``rCBBD4A2B34F2571758FF6A797E09859D\n``
+
+    This is the response from the system. If data has been encrypted
+    with a 'p' for example, the system will respond with the 'r'
+    sequence automatically. So sending the earlier example means the
+    result of the encryption was ``cbbd4a2b34f2571758ff6a797e09859d``.
 
 Building the Basic Example
 --------------------------
@@ -229,7 +212,7 @@ successfully run the block below.
     .
     Creating load file for EEPROM: simpleserial-base-CWNANO.eep
     arm-none-eabi-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWNANO.elf simpleserial-base-CWNANO.eep || exit 0
+    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWNANO.elf simpleserial-base-CWNANO.eep \|\| exit 0
     .
     Creating Extended Listing: simpleserial-base-CWNANO.lss
     arm-none-eabi-objdump -h -S -z simpleserial-base-CWNANO.elf > simpleserial-base-CWNANO.lss
@@ -354,7 +337,7 @@ Then rebuild the file with ``make``:
     .
     Creating load file for EEPROM: simpleserial-base-CWNANO.eep
     arm-none-eabi-objcopy -j .eeprom --set-section-flags=.eeprom="alloc,load" \
-    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWNANO.elf simpleserial-base-CWNANO.eep || exit 0
+    	--change-section-lma .eeprom=0 --no-change-warnings -O ihex simpleserial-base-CWNANO.elf simpleserial-base-CWNANO.eep \|\| exit 0
     .
     Creating Extended Listing: simpleserial-base-CWNANO.lss
     arm-none-eabi-objdump -h -S -z simpleserial-base-CWNANO.elf > simpleserial-base-CWNANO.lss
@@ -394,8 +377,9 @@ looking at in later tutorials.
 
     import chipwhisperer as cw
 
-Documentation is available by calling ``help()`` on the module,
-submodules, functions, etc.:
+Documentation is available on
+`ReadtheDocs <https://chipwhisperer.readthedocs.io/en/latest/api.html>`__
+or by calling ``help()`` on the module, submodule, function, etc.:
 
 
 **In [8]:**
@@ -639,128 +623,128 @@ can still specify the scope type.
     Help on CWNano in module chipwhisperer.capture.scopes.cwnano object:
     
     class CWNano(chipwhisperer.capture.scopes.base.ScopeTemplate, chipwhisperer.common.utils.util.DisableNewAttr)
-     |  CWNano scope object.
-     |  
-     |  This class contains the public API for the CWNano hardware. It includes
-     |  specific settings for each of these devices.
-     |  
-     |  To connect to one of these devices, the easiest method is::
-     |  
-     |      import chipwhisperer as cw
-     |      scope = cw.scope(type=scopes.CWNano)
-     |  
-     |  Some sane default settings can be set using::
-     |  
-     |      scope.default_setup()
-     |  
-     |  For more help about scope settings, try help() on each of the ChipWhisperer
-     |  scope submodules (scope.adc, scope.io, scope.glitch):
-     |  
-     |    \* :attr:`scope.adc <.CWNano.adc>`
-     |    \* :attr:`scope.io <.CWNano.io>`
-     |    \* :attr:`scope.glitch <.CWNano.glitch>`
-     |    \* :meth:`scope.default_setup <.CWNano.default_setup>`
-     |    \* :meth:`scope.con <.CWNano.con>`
-     |    \* :meth:`scope.dis <.CWNano.dis>`
-     |    \* :meth:`scope.get_last_trace <.CWNano.get_last_trace>`
-     |    \* :meth:`scope.arm <.CWNano.arm>`
-     |    \* :meth:`scope.capture <.CWNano.capture>`
-     |  
-     |  Method resolution order:
-     |      CWNano
-     |      chipwhisperer.capture.scopes.base.ScopeTemplate
-     |      chipwhisperer.common.utils.util.DisableNewAttr
-     |      builtins.object
-     |  
-     |  Methods defined here:
-     |  
-     |  __init__(self)
-     |      Initialize self.  See help(type(self)) for accurate signature.
-     |  
-     |  __repr__(self)
-     |      Return repr(self).
-     |  
-     |  __str__(self)
-     |      Return str(self).
-     |  
-     |  arm(self)
-     |      Arm the ADC, the trigger will be GPIO4 rising edge (fixed trigger).
-     |  
-     |  capture(self)
-     |      Raises IOError if unknown failure, returns 'True' if timeout, 'False' if no timeout
-     |  
-     |  default_setup(self)
-     |      Sets up sane capture defaults for this scope
-     |      
-     |        \* 7.5MHz ADC clock
-     |        \* 7.5MHz output clock
-     |        \* 5000 capture samples
-     |        \* tio1 = serial rx
-     |        \* tio2 = serial tx
-     |        \* glitch module off
-     |      
-     |      .. versionadded:: 5.1
-     |          Added default setup for CWNano
-     |  
-     |  getCurrentScope(self)
-     |  
-     |  getLastTrace(self)
-     |      Deprecated: Use get_last_trace instead.
-     |  
-     |  get_last_trace(self)
-     |      Return the last trace captured with this scope.
-     |  
-     |  get_possible_devices(self, idProduct)
-     |  
-     |  usbdev(self)
-     |  
-     |  ----------------------------------------------------------------------
-     |  Data and other attributes defined here:
-     |  
-     |  REQ_ARM = 41
-     |  
-     |  REQ_SAMPLES = 42
-     |  
-     |  ----------------------------------------------------------------------
-     |  Methods inherited from chipwhisperer.capture.scopes.base.ScopeTemplate:
-     |  
-     |  con(self, sn=None)
-     |  
-     |  dcmTimeout(self)
-     |  
-     |  dis(self)
-     |  
-     |  getName(self)
-     |      Deprecated: Use get_name instead.
-     |  
-     |  getStatus(self)
-     |  
-     |  get_name(self)
-     |  
-     |  newDataReceived(self, channelNum, data=None, offset=0, sampleRate=0)
-     |  
-     |  setAutorefreshDCM(self, enabled)
-     |  
-     |  setCurrentScope(self, scope)
-     |  
-     |  ----------------------------------------------------------------------
-     |  Data descriptors inherited from chipwhisperer.capture.scopes.base.ScopeTemplate:
-     |  
-     |  __dict__
-     |      dictionary for instance variables (if defined)
-     |  
-     |  __weakref__
-     |      list of weak references to the object (if defined)
-     |  
-     |  ----------------------------------------------------------------------
-     |  Methods inherited from chipwhisperer.common.utils.util.DisableNewAttr:
-     |  
-     |  __setattr__(self, name, value)
-     |      Implement setattr(self, name, value).
-     |  
-     |  disable_newattr(self)
-     |  
-     |  enable_newattr(self)
+     \|  CWNano scope object.
+     \|  
+     \|  This class contains the public API for the CWNano hardware. It includes
+     \|  specific settings for each of these devices.
+     \|  
+     \|  To connect to one of these devices, the easiest method is::
+     \|  
+     \|      import chipwhisperer as cw
+     \|      scope = cw.scope(type=scopes.CWNano)
+     \|  
+     \|  Some sane default settings can be set using::
+     \|  
+     \|      scope.default_setup()
+     \|  
+     \|  For more help about scope settings, try help() on each of the ChipWhisperer
+     \|  scope submodules (scope.adc, scope.io, scope.glitch):
+     \|  
+     \|    \* :attr:`scope.adc <.CWNano.adc>`
+     \|    \* :attr:`scope.io <.CWNano.io>`
+     \|    \* :attr:`scope.glitch <.CWNano.glitch>`
+     \|    \* :meth:`scope.default_setup <.CWNano.default_setup>`
+     \|    \* :meth:`scope.con <.CWNano.con>`
+     \|    \* :meth:`scope.dis <.CWNano.dis>`
+     \|    \* :meth:`scope.get_last_trace <.CWNano.get_last_trace>`
+     \|    \* :meth:`scope.arm <.CWNano.arm>`
+     \|    \* :meth:`scope.capture <.CWNano.capture>`
+     \|  
+     \|  Method resolution order:
+     \|      CWNano
+     \|      chipwhisperer.capture.scopes.base.ScopeTemplate
+     \|      chipwhisperer.common.utils.util.DisableNewAttr
+     \|      builtins.object
+     \|  
+     \|  Methods defined here:
+     \|  
+     \|  __init__(self)
+     \|      Initialize self.  See help(type(self)) for accurate signature.
+     \|  
+     \|  __repr__(self)
+     \|      Return repr(self).
+     \|  
+     \|  __str__(self)
+     \|      Return str(self).
+     \|  
+     \|  arm(self)
+     \|      Arm the ADC, the trigger will be GPIO4 rising edge (fixed trigger).
+     \|  
+     \|  capture(self)
+     \|      Raises IOError if unknown failure, returns 'True' if timeout, 'False' if no timeout
+     \|  
+     \|  default_setup(self)
+     \|      Sets up sane capture defaults for this scope
+     \|      
+     \|        \* 7.5MHz ADC clock
+     \|        \* 7.5MHz output clock
+     \|        \* 5000 capture samples
+     \|        \* tio1 = serial rx
+     \|        \* tio2 = serial tx
+     \|        \* glitch module off
+     \|      
+     \|      .. versionadded:: 5.1
+     \|          Added default setup for CWNano
+     \|  
+     \|  getCurrentScope(self)
+     \|  
+     \|  getLastTrace(self)
+     \|      Deprecated: Use get_last_trace instead.
+     \|  
+     \|  get_last_trace(self)
+     \|      Return the last trace captured with this scope.
+     \|  
+     \|  get_possible_devices(self, idProduct)
+     \|  
+     \|  usbdev(self)
+     \|  
+     \|  ----------------------------------------------------------------------
+     \|  Data and other attributes defined here:
+     \|  
+     \|  REQ_ARM = 41
+     \|  
+     \|  REQ_SAMPLES = 42
+     \|  
+     \|  ----------------------------------------------------------------------
+     \|  Methods inherited from chipwhisperer.capture.scopes.base.ScopeTemplate:
+     \|  
+     \|  con(self, sn=None)
+     \|  
+     \|  dcmTimeout(self)
+     \|  
+     \|  dis(self)
+     \|  
+     \|  getName(self)
+     \|      Deprecated: Use get_name instead.
+     \|  
+     \|  getStatus(self)
+     \|  
+     \|  get_name(self)
+     \|  
+     \|  newDataReceived(self, channelNum, data=None, offset=0, sampleRate=0)
+     \|  
+     \|  setAutorefreshDCM(self, enabled)
+     \|  
+     \|  setCurrentScope(self, scope)
+     \|  
+     \|  ----------------------------------------------------------------------
+     \|  Data descriptors inherited from chipwhisperer.capture.scopes.base.ScopeTemplate:
+     \|  
+     \|  __dict__
+     \|      dictionary for instance variables (if defined)
+     \|  
+     \|  __weakref__
+     \|      list of weak references to the object (if defined)
+     \|  
+     \|  ----------------------------------------------------------------------
+     \|  Methods inherited from chipwhisperer.common.utils.util.DisableNewAttr:
+     \|  
+     \|  __setattr__(self, name, value)
+     \|      Implement setattr(self, name, value).
+     \|  
+     \|  disable_newattr(self)
+     \|  
+     \|  enable_newattr(self)
     
     
 
@@ -820,7 +804,7 @@ Or, more simply:
 
 Now that the clock and IO lines are setup, we can program the target.
 ChipWhisperer includes a generic programming function,
-``cw.programTarget(scope, type, fw_path)``. Here ``type`` is one of the
+``cw.program_target(scope, type, fw_path)``. Here ``type`` is one of the
 programmers available in the cw.programmers submodule
 (``help(cw.programmers)`` for more information). ``fw_path`` is the path
 to the hex file that you want to flash onto the device.
@@ -858,7 +842,7 @@ And finally actually programming the device:
 
 .. parsed-literal::
 
-    Detected unknown STM32F ID: 0x444
+    Detected unknown STM32F ID: 0x445
     Extended erase (0x44), this can take ten seconds or more
     Attempting to program 4335 bytes at 0x8000000
     STM32F Programming flash...
@@ -901,8 +885,8 @@ the received text below it.
 
 .. parsed-literal::
 
-    b'e9567190ba996c5605ca7314e5b2a8f9'
-    b'e9567190ba996c5605ca7314e5b2a8f9'
+    b'cd408f8596792aecc60d57bd6b95aa8d'
+    b'cd408f8596792aecc60d57bd6b95aa8d'
     
 
 
@@ -926,8 +910,8 @@ You can also just run:
 
 .. parsed-literal::
 
-    b'e9567190ba996c5605ca7314e5b2a8f9'
-    b'e9567190ba996c5605ca7314e5b2a8f9'
+    b'cd408f8596792aecc60d57bd6b95aa8d'
+    b'cd408f8596792aecc60d57bd6b95aa8d'
     
 
 
@@ -955,4 +939,4 @@ like to see exactly what they're doing, they're all included in the
 ``Helper_Scripts`` folder.
 
 For example, the scope setup (gain, clock, etc) is taken care of by
-``Helper Scripts/Setup_Target_Generic.ipynb``.
+``Helper Scripts/Setup_Generic.ipynb``.
