@@ -29,7 +29,7 @@ by routing the glitch to either the ``glitch_hp`` transistor or the
 .. code:: python
 
    scope.io.glitch_hp = True #enable HP glitch
-   scope.io.glitch_hp = False #disable LP glitch
+   scope.io.glitch_hp = False #disable HP glitch
    scope.io.glitch_lp = True #enable LP glitch
    scope.io.glitch_lp = False #disable LP glitch
 
@@ -154,11 +154,16 @@ jumpered, high+low power glitch, 32MHz, and repeat=5.
     rm -f -- simpleserial-glitch.i simpleserial.i XMEGA\_AES\_driver.i uart.i usart\_driver.i xmega\_hal.i
     .
     Welcome to another exciting ChipWhisperer target build!!
-    avr-gcc.exe (WinAVR 20100110) 4.3.3
-    Copyright (C) 2008 Free Software Foundation, Inc.
-    This is free software; see the source for copying conditions.  There is NO
-    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-    
+    avr-gcc.exe (WinAVR 20100110) 4.3.3
+
+    Copyright (C) 2008 Free Software Foundation, Inc.
+
+    This is free software; see the source for copying conditions.  There is NO
+
+    warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+    
+
     .
     Compiling C: simpleserial-glitch.c
     avr-gcc -c -mmcu=atxmega128d3 -I. -fpack-struct -gdwarf-2 -DSS\_VER=SS\_VER\_1\_1 -DHAL\_TYPE=HAL\_xmega -DPLATFORM=CWLITEXMEGA -DF\_CPU=7372800UL -Os -funsigned-char -funsigned-bitfields -fshort-enums -Wall -Wstrict-prototypes -Wa,-adhlns=objdir/simpleserial-glitch.lst -I.././simpleserial/ -I.././hal -I.././hal/xmega -I.././crypto/ -std=gnu99  -MMD -MP -MF .dep/simpleserial-glitch.o.d simpleserial-glitch.c -o objdir/simpleserial-glitch.o 
@@ -194,8 +199,10 @@ jumpered, high+low power glitch, 32MHz, and repeat=5.
     Creating Symbol Table: simpleserial-glitch-CWLITEXMEGA.sym
     avr-nm -n simpleserial-glitch-CWLITEXMEGA.elf > simpleserial-glitch-CWLITEXMEGA.sym
     Size after:
-       text	   data	    bss	    dec	    hex	filename
-       2288	     22	     52	   2362	    93a	simpleserial-glitch-CWLITEXMEGA.elf
+       text	   data	    bss	    dec	    hex	filename
+
+       2288	     22	     52	   2362	    93a	simpleserial-glitch-CWLITEXMEGA.elf
+
     +--------------------------------------------------------
     + Default target does full rebuild each time.
     + Specify buildtarget == allquick == to avoid full rebuild
